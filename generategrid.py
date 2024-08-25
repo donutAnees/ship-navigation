@@ -1,3 +1,5 @@
+from shipSpeed import shipSpeed
+
 def generate_grid(start_lat, end_lat, start_lon, end_lon, step_deg):
     grid = []
 
@@ -27,10 +29,17 @@ def generate_grid(start_lat, end_lat, start_lon, end_lon, step_deg):
     return grid
 
 def main():
+    # Generate grid with 0.08 degree step
     grid = generate_grid(9.6, 9.1 , 78.8, 80.2, 0.08)
     for row in grid:
         for pos in row:
             print(pos)
+
+    #ship speed calculation
+    #def __init__(self, ship_speed, wave_height, displacement, k1, k2, k3, k4, wind_speed, angle):
+    ship = shipSpeed( 30, 1.26, 200000,  1.08, 0.126, 2.77, 2.33, 15, 30)
+    speed = ship.getSpeed()
+    print(speed)
 
 if __name__ == "__main__":
     main()
