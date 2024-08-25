@@ -1,11 +1,9 @@
 '''
-Calculates the navigation risk (wind angle and wave angle) that affect the movement of the ship.
-Contains public method calculate_risk:
-    returns the wind angle and wave angle relative to the direction of the moving ship.
+Calculates the navigation risk using wind angle and wave angle that affect the movement of the ship.
 '''
 
-def calculate_risk(ship_heading, wave_direction, wind_direction) -> tuple[float]:
-    '''Calculates the ship navigation risk.
+def find_relative_angles(ship_heading, wave_direction, wind_direction) -> tuple[float]:
+    '''Calculates the angles that wind direction and wave direction make with the ship's direction.
         Returns:
             wind angle and wave angle relative to the direction of the moving ship.
         Parameters:
