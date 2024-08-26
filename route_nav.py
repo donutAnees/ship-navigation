@@ -109,7 +109,7 @@ final_path_coords = [nodes[node] for node in final_shortest_path[0]]
 final_shortest_path = min(all_paths, key=lambda x: x[1])
 final_path_coords = [nodes[node] for node in final_shortest_path[0]]
 
-# Save the final best path and distance to a separate CSV file
+'''# Save the final best path and distance to a separate CSV file
 with open('final_path.csv', 'w', newline='') as csvfile:
     fieldnames = ['Path', 'Distance']
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -120,7 +120,7 @@ with open('final_path.csv', 'w', newline='') as csvfile:
     writer.writerow({
         'Path': path_str,
         'Distance': final_shortest_path[1]
-    })
+    })'''
 
 print(f"\nFinal best path (nodes): {final_shortest_path[0]}")
 print(f"Final best path (coordinates): {final_path_coords}")
