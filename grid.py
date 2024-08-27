@@ -109,16 +109,23 @@ def bresenham_algorithm(lat1,lon1,lat2,lon2):
     ### then (x+1, y+1) is chosen, else (x+1, y) is chosen. The only overhead here is the 1/2 calculation,
     ### since all we care about is sign of the accumulated difference, everything can be multiplied by 2
     ### with no consequence.
+
+    ### The algorithm can be extended to cover slopes between 0 and -1 by checking whether y needs to increase or decrease
+    ### By switching the x and y axis an implementation for positive or negative steep slopes
     if abs(lon2 - lon1) < abs(lat2 - lat1):
         if lat1 > lat2:
-            helper_line_low(lat2, lon2, lat1, lon1)
+            points = helper_line_low(lat2, lon2, lat1, lon1)
         else:
-            helper_line_low(lat1, lon1, lat2, lon2)
+            points = helper_line_low(lat1, lon1, lat2, lon2)
     else:
         if lon1 > lon2:
-            helper_line_hight(lat2, lon2, lat1, lon1)
+            points = helper_line_hight(lat2, lon2, lat1, lon1)
         else:
-            helper_line_hight(lat1, lon1, lat2, lon2)
+            points = helper_line_hight(lat1, lon1, lat2, lon2)
+
+    ### One thing to note here is that points are returned here, not the grids we have to find the grid 
+    ### based on the orientation of the line 
+    return points
 
 
 def helper_line_low(x0, y0, x1, y1):
@@ -162,16 +169,25 @@ def helper_line_hight(x0, y0, x1, y1):
 
 def main():
     # Generate grid with 0.08 degree step
-    grid = generate_grid(9.6, 9.1 , 78.8, 80.2, 0.08)
-    for row in grid:
-        for pos in row:
-            print(pos)
+    # grid = generate_grid(9.6, 9.1 , 78.8, 80.2, 0.08)
+    # for row in grid:
+    #     for pos in row:
+    #         print(pos)
+
+    # Testing bresenham
+    # Get the list of points that the line passes through
+    points = bresenham_algorithm(13, 11, 10, 17)
+
+    # Print the points
+    print("Points the line passes through:")
+    for point in points:
+        print(point)
 
     #ship speed calculation
     #def __init__(self, ship_speed, wave_height, displacement, k1, k2, k3, k4, wind_speed, angle):
-    ship = shipSpeed( 30, 1.26, 200000,  1.08, 0.126, 2.77, 2.33, 15, 30)
-    speed = ship.getSpeed()
-    print(speed)
+    # ship = shipSpeed( 30, 1.26, 200000,  1.08, 0.126, 2.77, 2.33, 15, 30)
+    # speed = ship.getSpeed()
+    # print(speed)
 
 if __name__ == "__main__":
     main()
