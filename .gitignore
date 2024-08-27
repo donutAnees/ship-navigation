@@ -2,3 +2,7 @@ __pycache__/
 *.pyc
 *.pyo
 aco_paths.csv
+.vscode/
+.idea/
+Data/
+.env

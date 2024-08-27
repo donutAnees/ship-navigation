@@ -30,7 +30,7 @@ def generate_grid(start_lat, end_lat, start_lon, end_lon, step_deg):
 
 def main():
     # Generate grid with 0.08 degree step
-    grid = generate_grid(9.6, 9.1 , 78.8, 80.2, 0.08)
+    grid = generate_grid(9.6, 9.1, 79.2, 79.9, 0.08)
     for row in grid:
         for pos in row:
             print(pos)
@@ -43,4 +43,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
