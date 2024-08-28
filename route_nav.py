@@ -2,10 +2,10 @@ import numpy as np
 import random
 import math
 import csv
-from generategrid import generate_grid
+from grid import generate_grid_points
 
 # Generate grid with 0.08 degree step
-grid = generate_grid(9.6, 9.1, 78.8, 80.2, 0.08)
+grid = generate_grid_points(9.6, 9.1, 78.8, 80.2, 0.08)
 #print(grid)
 
 # Flatten the grid to a list of coordinates

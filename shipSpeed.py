@@ -2,7 +2,7 @@ import math
 
 '''
 h  ---> wave height; 
-q ---> angle between the ship’s heading and the coming direction of the waves; 
+q ---> angle between the ship's heading and the coming direction of the waves; 
 D ---> actual displacement of the ship; 
 V0 ---> speed of the ship in still water; 
 Vw ---> speed of the wind;
