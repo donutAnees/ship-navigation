@@ -1,6 +1,8 @@
 from shipSpeed import shipSpeed
 import math
 import matplotlib.pyplot as plt
+import time
+
 
 def generate_grid_points(start_lat, end_lat, start_lon, end_lon, step_deg):
     """
@@ -122,7 +124,17 @@ def bresenham_algorithm(lat1,lon1,lat2,lon2,start_lat1,start_lon2,step):
     ### floating-point arithmetic. This D can be derived D = Δy - 1/2Δx. Based upon his, if D is positive
     ### then (x+1, y+1) is chosen, else (x+1, y) is chosen. The only overhead here is the 1/2 calculation,
     ### since all we care about is sign of the accumulated difference, everything can be multiplied by 2
-    ### with no consequence.
+    ### with no consequence. D is nothing but the difference between the current point and the next point
+    ### mid.
+
+    ### One thing to note here is that closest grids are returned here not all the grids which touch the line
+    ### to make we consider all the grids, we modify this algorithm, we consider both (x, y) and (x, y + 1) 
+    ### since the line will pass through both, if its not passing through the middle or if is within (x, y).
+    ### Therefore if (x, y+1) is closer then we also consider (x, y) this is implemented for all the directions 
+    ### But this is cause issue for lines passing through integer points like (4,5) therefore for such points 
+    ### we do not include (x, y)
+
+    ### To check if the current point the line passing through is a integer point, we do
 
     ### The algorithm can be extended to cover slopes between 0 and -1 by checking whether y needs to increase or decrease
     ### By switching the x and y axis an implementation for positive or negative steep slopes
@@ -133,17 +145,10 @@ def bresenham_algorithm(lat1,lon1,lat2,lon2,start_lat1,start_lon2,step):
             points = helper_line_low(lat1, lon1, lat2, lon2)
     else:
         if lon1 > lon2:
-            points = helper_line_hight(lat2, lon2, lat1, lon1)
+            points = helper_line_high(lat2, lon2, lat1, lon1)
         else:
-            points = helper_line_hight(lat1, lon1, lat2, lon2)
+            points = helper_line_high(lat1, lon1, lat2, lon2)
 
-    ### One thing to note here is that points are returned here not the grids! we have to find the grid,
-    ### this can be done by considering both the grids above/below the points
-    ### |---|---| 
-    ### | 1 | 2 |
-    ### |---.---|
-    ### Here grid 1 and 2 are considered which are above the points, the reason to choose above is cause
-    ### the line passes above the point, had it passed below, we would have considered below grids
     return points
 
 
@@ -158,16 +163,18 @@ def helper_line_low(x0, y0, x1, y1):
     y = y0
     points = []
     for x in range(x0,x1+1):
-        print(D)
         points.append((x,y))
         if D > 0:
+            # modification
+            if(is_point_on_line_segment(x0,y0,x1,y1,x,y) == False):
+                points.append((x,y+1)) # modification
             y = y + yi
             D = D + (2 * (dy - dx))
         else:
             D = D + 2*dy
     return points
 
-def helper_line_hight(x0, y0, x1, y1):
+def helper_line_high(x0, y0, x1, y1):
     dx = x1 - x0
     dy = y1 - y0
     xi = 1
@@ -178,14 +185,41 @@ def helper_line_hight(x0, y0, x1, y1):
     x = x0
     points = []
     for y in range(y0,y1+1):
-        print(D)
         points.append((x,y))
         if D > 0:
+            # modification
+            if(is_point_on_line_segment(x0,y0,x1,y1,x,y) == False):
+                points.append((x+1,y))
             x = x + xi
             D = D + (2 * (dx - dy))
         else:
             D = D + 2*dx   
     return points
+
+def is_point_on_line_segment(x1, y1, x2, y2, px, py):
+    """
+    Check if a point (px, py) is on the line segment between (x1, y1) and (x2, y2).
+
+    Parameters:
+    x1, y1: Coordinates of the first point.
+    x2, y2: Coordinates of the second point.
+    px, py: Coordinates of the point to check.
+
+    Returns:
+    bool: True if the point (px, py) is on the line segment, False otherwise.
+    """
+    # Check if the point (px, py) is collinear with (x1, y1) and (x2, y2)
+    # Use cross product to determine if the points are collinear
+    # (x2 - x1) * (py - y1) == (px - x1) * (y2 - y1) indicates collinearity
+    if (x2 - x1) * (py - y1) != (px - x1) * (y2 - y1):
+        return False
+    
+    # Check if the point is within the bounds of the line segment
+    if (min(x1, x2) <= px <= max(x1, x2)) and (min(y1, y2) <= py <= max(y1, y2)):
+        return True
+    
+    return False
+
 
 
 def main():
@@ -195,9 +229,10 @@ def main():
     #     for pos in row:
     #         print(pos)
 
+    start_time = time.time()
+
     # Testing bresenham
-    # Get the list of points that the line passes through
-    points = bresenham_algorithm(2, 0, 6, 4, 1,1,1)
+    points = bresenham_algorithm(2, 4, 18, 4, 1,1,1)
     
     # Print the points
     print("Points the line passes through:")
@@ -209,6 +244,11 @@ def main():
     # ship = shipSpeed( 30, 1.26, 200000,  1.08, 0.126, 2.77, 2.33, 15, 30)
     # speed = ship.getSpeed()
     # print(speed)
+        
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print(f"Time taken to execute: {elapsed_time:.8f} seconds")
+
 
 if __name__ == "__main__":
     main()
