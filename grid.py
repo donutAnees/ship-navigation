@@ -2,6 +2,7 @@ from shipSpeed import shipSpeed
 import math
 import matplotlib.pyplot as plt
 import time
+import numpy as np
 
 
 def generate_grid_points(start_lat, end_lat, start_lon, end_lon, step_deg):
@@ -54,7 +55,7 @@ def generate_grid_points(start_lat, end_lat, start_lon, end_lon, step_deg):
 
     return grid
 
-def calculate_orientation(grid, path):
+def calculate_orientation(grid, path, step_size):
     '''
     Calculates the orientation of the ship with respect to north in each grid, that is the bearing angle.
     Representation of the 4 direction in degree
@@ -67,6 +68,7 @@ def calculate_orientation(grid, path):
     Parameter:
         grid -> The input grid containing latitude and longitude points.
         path -> The path of the ship as a list of (latitude, longitude). 
+        step_deg -> The step size in degrees for latitude and longitude.
     '''
     orientations_grid = [[-1 for _ in range(len(grid[0]))] for _ in range(len(grid))]
     for i in range(len(path) - 1):
@@ -82,13 +84,17 @@ def calculate_orientation(grid, path):
         thetha = math.atan2(y, x) # In radian
         brng = (thetha * 180 / math.pi + 360) % 360 # In degree
 
-        # Find the index of the lat lon for start and end in the grid
+        # Find all the grids which intercept the path between start and end lat lon
+        grids = get_intercepting_grid(lat1,lon1,lat2,lon2,grid[0][0][0],grid[0][0][1],step_size)
+        for g in grids:
+            print(g)  
 
-def bresenham_algorithm(lat1,lon1,lat2,lon2,start_lat1,start_lon2,step):
+
+def get_intercepting_grid(lat1,lon1,lat2,lon2,start_lat1,start_lon1,step):
     '''
-    Finds all the grids which touches the path of the ship between two coordinates
+    Finds all the grids which touches the path of the ship
     Returns:
-        A list of indexes in the grid where the ship meets.
+        A list of indexes (row, column) in the grid where the ship's path intersects.
     Parameters:
         lat1: The starting latitude of the path.
         lat2: The ending latitude of the path.
@@ -98,146 +104,74 @@ def bresenham_algorithm(lat1,lon1,lat2,lon2,start_lat1,start_lon2,step):
         start_lon2: The starting longitude of the grid.
         step: The size of each grid.
     '''
-    ### Bresenham's algorithmc can be used here, which calculates which pixels should be 
-    ### filled to best approximate a straight line between two endpoints. The algorithm 
-    ### operates by iterating over each column (or row, depending on the line's slope) and 
-    ### deciding whether to increment the row position based on an error term. This is better
-    ### compared to finding the slope and multiplying as it requires floating point. This error 
-    ### term tracks the difference between the actual line position and the nearest pixel. 
-    ### When the error exceeds a threshold, the y-coordinate is incremented, and the error 
-    ### term is adjusted. We use this to find all the grids that touches the line.
 
-    ### The slope-intercept form of a line is written as a function of both X and Y, if for 
-    ### a given point, this evaluates to 0, then that point is in the line.
+    x0 = int((lon1 - start_lon1) / step)
+    y0 = int((start_lat1 - lat1) / step)
+    x1 = int((lon2 - start_lon1) / step)
+    y1 = int((start_lat1 - lat2) / step)
 
-    ### Algorithm: Line from Left to Right
-    ### Given the constraint that the line has a slope less than or equal to 1, the algorithm 
-    ### has two candidate pixels to choose from for the next step as we move to the right by
-    ### one column from x to x + 1. These candidate pixels are: (x+1,y) and (x+1,y+1), rather 
-    ### than evaluating both, (x+1,y + 1/2) mid is found out, if the value of this is positive 
-    ### then the ideal line is below the midpoint and closer to the candidate point (x+1,y+1) 
-    ### the y coordinate should increase. Otherwise, the ideal line passes through or above 
-    ### the midpoint, and the y coordinate should stay the same.
-
-    ### Alternatively, the difference between points can be used instead of evaluating f(x,y) at midpoints. 
-    ### This alternative method allows for integer-only arithmetic, which is generally faster than using 
-    ### floating-point arithmetic. This D can be derived D = Δy - 1/2Δx. Based upon his, if D is positive
-    ### then (x+1, y+1) is chosen, else (x+1, y) is chosen. The only overhead here is the 1/2 calculation,
-    ### since all we care about is sign of the accumulated difference, everything can be multiplied by 2
-    ### with no consequence. D is nothing but the difference between the current point and the next point
-    ### mid.
-
-    ### One thing to note here is that closest grids are returned here not all the grids which touch the line
-    ### to make we consider all the grids, we modify this algorithm, we consider both (x, y) and (x, y + 1) 
-    ### since the line will pass through both, if its not passing through the middle or if is within (x, y).
-    ### Therefore if (x, y+1) is closer then we also consider (x, y) this is implemented for all the directions 
-    ### But this is cause issue for lines passing through integer points like (4,5) therefore for such points 
-    ### we do not include (x, y)
-
-    ### To check if the current point the line passing through is a integer point, we do
-
-    ### The algorithm can be extended to cover slopes between 0 and -1 by checking whether y needs to increase or decrease
-    ### By switching the x and y axis an implementation for positive or negative steep slopes
-    if abs(lon2 - lon1) < abs(lat2 - lat1):
-        if lat1 > lat2:
-            points = helper_line_low(lat2, lon2, lat1, lon1)
+    if abs(y1 - y0) < abs(x1 - x0):
+        if x0 > x1:
+            # Slanting from right to left
+            grids = helper_line_low(x1, y1, x0, y0)
         else:
-            points = helper_line_low(lat1, lon1, lat2, lon2)
+            # Slanting from left to right
+            grids = helper_line_low(x0, y0, x1, y1)
     else:
-        if lon1 > lon2:
-            points = helper_line_high(lat2, lon2, lat1, lon1)
+        if y0 > y1:
+            # Slanting from right to left
+            grids = helper_line_high(x1, y1, x0, y0)
         else:
-            points = helper_line_high(lat1, lon1, lat2, lon2)
+            # Slanting from left to right
+            grids = helper_line_high(x0, y0, x1, y1)
 
-    return points
-
+    return grids
 
 def helper_line_low(x0, y0, x1, y1):
-    dx = x1 - x0
-    dy = y1 - y0
-    yi = 1
-    if dy < 0:
-        yi = -1
-        dy = -dy
-    D = (2 * dy) - dx
-    y = y0
-    points = []
+    grids = []
+    # Calculate the slope (m)
+    m = (y1 - y0) / (x1 - x0)
+    
+    # Calculate the y-intercept (c)
+    c = y0 - m * x0
+
     for x in range(x0,x1+1):
-        points.append((x,y))
-        if D > 0:
-            # modification
-            if(is_point_on_line_segment(x0,y0,x1,y1,x,y) == False):
-                points.append((x,y+1)) # modification
-            y = y + yi
-            D = D + (2 * (dy - dx))
-        else:
-            D = D + 2*dy
-    return points
+        # Calculate y for the given x
+        y = m * x + c
+        grids.append((x,y))
+
+    return grids
 
 def helper_line_high(x0, y0, x1, y1):
-    dx = x1 - x0
-    dy = y1 - y0
-    xi = 1
-    if dx < 0:
-        xi = -1
-        dx = -dx
-    D = (2 * dx) - dy
-    x = x0
-    points = []
-    for y in range(y0,y1+1):
-        points.append((x,y))
-        if D > 0:
-            # modification
-            if(is_point_on_line_segment(x0,y0,x1,y1,x,y) == False):
-                points.append((x+1,y))
-            x = x + xi
-            D = D + (2 * (dx - dy))
-        else:
-            D = D + 2*dx   
-    return points
-
-def is_point_on_line_segment(x1, y1, x2, y2, px, py):
-    """
-    Check if a point (px, py) is on the line segment between (x1, y1) and (x2, y2).
-
-    Parameters:
-    x1, y1: Coordinates of the first point.
-    x2, y2: Coordinates of the second point.
-    px, py: Coordinates of the point to check.
-
-    Returns:
-    bool: True if the point (px, py) is on the line segment, False otherwise.
-    """
-    # Check if the point (px, py) is collinear with (x1, y1) and (x2, y2)
-    # Use cross product to determine if the points are collinear
-    # (x2 - x1) * (py - y1) == (px - x1) * (y2 - y1) indicates collinearity
-    if (x2 - x1) * (py - y1) != (px - x1) * (y2 - y1):
-        return False
+    grids = []
+    # Calculate the slope (m)
+    m = (y1 - y0) / (x1 - x0)
     
-    # Check if the point is within the bounds of the line segment
-    if (min(x1, x2) <= px <= max(x1, x2)) and (min(y1, y2) <= py <= max(y1, y2)):
-        return True
-    
-    return False
+    # Calculate the y-intercept (c)
+    c = y0 - m * x0
 
+    for y in range(y0,y1-1,-1):
+        # Calculate x for the given y
+        x = (y - c) / m
+        grids.append((x,y))
 
+    return grids
 
 def main():
     # Generate grid with 0.08 degree step
-    # grid = generate_grid(9.6, 9.1 , 78.8, 80.2, 0.08)
+    grid = generate_grid_points(9.6, 9.1 , 78.8, 80.2, 0.08)
     # for row in grid:
     #     for pos in row:
     #         print(pos)
 
     start_time = time.time()
-
-    # Testing bresenham
-    points = bresenham_algorithm(2, 4, 18, 4, 1,1,1)
     
-    # Print the points
-    print("Points the line passes through:")
-    for point in points:
-        print(point)
+    # # Print the points
+    # print("Points the line passes through:")
+    # for g in grid:
+    #     print(g)
+
+    calculate_orientation(grid,[(9.6, 78.8),(9.1, 80.2)],0.08)
 
     #ship speed calculation
     #def __init__(self, ship_speed, wave_height, displacement, k1, k2, k3, k4, wind_speed, angle):
