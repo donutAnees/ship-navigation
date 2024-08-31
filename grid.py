@@ -1,9 +1,10 @@
 from shipSpeed import shipSpeed
 import math
-import matplotlib.pyplot as plt
 import time
-import numpy as np
 
+def calculate_distance(x1, y1, x2, y2):
+    # Euclidean Formula
+    return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
 
 def generate_grid_points(start_lat, end_lat, start_lon, end_lon, step_deg):
     """
@@ -147,35 +148,63 @@ def get_intercepting_grid(lat1,lon1,lat2,lon2,start_lat1,start_lon1,step,grid_po
 
 def helper_line_low(x0, y0, x1, y1, grid_point_rows, grid_point_cols):
     grids = []
+    distances = []
     # Calculate the slope (m)
     m = (y1 - y0) / (x1 - x0)
     
     # Calculate the y-intercept (c)
     c = y0 - m * x0
 
-    #We omit the first index
+    # Tracks the previous point
+    prev_x, prev_y = x0, y0 
+
+    # There will be the case where a line passes through 2 grids at once, to identify such we need to iterate though y and see
+    # if the line passes though this and the x is a float, if it is a float it means the line cuts in the middle. To avoid 
+    # unneccesary iteration we can just check y, whenever it crosses some integer value
     for x in range(x0+1,x1+1):
         # Calculate y for the given x
         y = m * x + c
-        # We get the ceil of y to get the top right corner of a grid
-        grids.append(get_grid_identifier(x,math.ceil(y),grid_point_rows,grid_point_cols))
+        # Check if the line cuts two grids at the same time, calculate for both grids
+        if( int(prev_y) < int(y) and x != x1):
+            y_floor = math.floor(y)
+            x_inter = (y_floor - c)/ m
+            grids.append(get_grid_identifier(x,y_floor,grid_point_rows,grid_point_cols))  
+            distances.append(calculate_distance(prev_x, prev_y, x_inter, y_floor)) 
+            grids.append(get_grid_identifier(x,math.ceil(y),grid_point_rows,grid_point_cols)) 
+            distances.append(calculate_distance(x_inter, y_floor, x, y)) 
+        # Calculate for one grid
+        else:
+            grids.append(get_grid_identifier(x,math.ceil(y),grid_point_rows,grid_point_cols)) 
+            distances.append(calculate_distance(prev_x, prev_y, x, y)) 
+        prev_x = x
+        prev_y = y
 
-    return grids
+    return grids , distances
 
 def helper_line_high(x0, y0, x1, y1, grid_point_rows, grid_point_cols):
     grids = []
+    distances = []
     # Calculate the slope (m)
     m = (y1 - y0) / (x1 - x0)
     
     # Calculate the y-intercept (c)
     c = y0 - m * x0
+
+    # Tracks the previous point to calculate the distance
+    prev_x, prev_y = x0, y0 
 
     for y in range(y0,y1,-1):
         # Calculate x for the given y
         x = (y - c) / m
-        print(math.ceil(x),y)
+        print("cur")
+        print(x,y)
+        print("prev")
+        print(prev_x,prev_y)
+        distances.append(calculate_distance(prev_x, prev_y, x, y))
+        prev_x = x
+        prev_y = y
         grids.append(get_grid_identifier(math.ceil(x),y,grid_point_rows,grid_point_cols))
-    return grids
+    return grids , distances
 
 def main():
     # Generate grid with 0.08 degree step
@@ -193,7 +222,7 @@ def main():
 
     # calculate_orientation(grid,[(9.6, 78.8),(9.1, 80.2)],0.08)
 
-    print(helper_line_high(2,8,0,0,3,9))
+    print(helper_line_low(0,0,17,2,18,3))
 
     #ship speed calculation
     #def __init__(self, ship_speed, wave_height, displacement, k1, k2, k3, k4, wind_speed, angle):
