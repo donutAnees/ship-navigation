@@ -123,7 +123,6 @@ def get_grid_identifier(x, y, grid_point_rows, grid_point_cols, direction, point
         else:  # Bottom right
             x = x - 1
             grid_index = (((grid_point_rows - 1) - y - 1)) * (grid_point_cols - 1) + x + 1
-    print("Pos",point_location,"direction",direction,"grid",grid_index)
     return grid_index
 
 def helper_line_low(x0, y0, x1, y1, grid_point_rows, grid_point_cols, direction):

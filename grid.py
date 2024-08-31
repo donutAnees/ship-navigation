@@ -70,7 +70,6 @@ def calculate_orientation(grid, path, step_size):
         path -> The path of the ship as a list of (latitude, longitude). 
         step_deg -> The step size in degrees for latitude and longitude.
     '''
-    orientations_grid = [[-1 for _ in range(len(grid[0]))] for _ in range(len(grid))]
     for i in range(len(path) - 1):
         lat1, lon1 = path[i]
         lat2, lon2 = path[i+1]
@@ -85,12 +84,20 @@ def calculate_orientation(grid, path, step_size):
         brng = (thetha * 180 / math.pi + 360) % 360 # In degree
 
         # Find all the grids which intercept the path between start and end lat lon
-        grids = get_intercepting_grid(lat1,lon1,lat2,lon2,grid[0][0][0],grid[0][0][1],step_size)
+        grids = get_intercepting_grid(lat1,lon1,lat2,lon2,grid[0][0][0],grid[0][0][1],step_size,len(grid),len(grid[0]))
         for g in grids:
             print(g)  
 
+def get_grid_identifier(x, y, grid_point_rows,grid_point_cols):
+    """
+    Calculate the grid identifier based on coordinates (x, y).
+    Given a point on the top right corner of a grid, we return the grid index
+    """
+    # Top Right in cartesian, bottom right in our grid
+    grid_index = ((grid_point_rows - 1) * (y - 1)) + x
+    return grid_index
 
-def get_intercepting_grid(lat1,lon1,lat2,lon2,start_lat1,start_lon1,step):
+def get_intercepting_grid(lat1,lon1,lat2,lon2,start_lat1,start_lon1,step,grid_point_rows,grid_point_cols):
     '''
     Finds all the grids which touches the path of the ship
     Returns:
@@ -103,7 +110,18 @@ def get_intercepting_grid(lat1,lon1,lat2,lon2,start_lat1,start_lon1,step):
         start_lat1: The starting latitude of the grid.
         start_lon2: The starting longitude of the grid.
         step: The size of each grid.
+        grid_point_rows: Number of points in the grid row
+        grid_point_cols: Number of points in the grid col
     '''
+
+    # Below is our grid looks like, which is normalized to integers from lat,lon based on the step, the values
+    # in between the points is the grid number
+    # (0,0) (0,1) (0,2) (0,3) (0,4) (0,5) (0,6)
+    #      1     3     5     7     9     11
+    # (1,0) (1,1) (1,2) (1,3) (1,4) (1,5) (1,6)
+    #      2     4     6     8    10     12 
+    # (2,0) (2,1) (2,2) (2,3) (2,4) (2,5) (2,6)
+    # Since we are using cartesian coordinates, hence we consider the grid index from top to bottom, left to right
 
     x0 = int((lon1 - start_lon1) / step)
     y0 = int((start_lat1 - lat1) / step)
@@ -113,21 +131,21 @@ def get_intercepting_grid(lat1,lon1,lat2,lon2,start_lat1,start_lon1,step):
     if abs(y1 - y0) < abs(x1 - x0):
         if x0 > x1:
             # Slanting from right to left
-            grids = helper_line_low(x1, y1, x0, y0)
+            grids = helper_line_low(x1, y1, x0, y0, grid_point_rows, grid_point_cols)
         else:
             # Slanting from left to right
-            grids = helper_line_low(x0, y0, x1, y1)
+            grids = helper_line_low(x0, y0, x1, y1, grid_point_rows, grid_point_cols)
     else:
         if y0 > y1:
             # Slanting from right to left
-            grids = helper_line_high(x1, y1, x0, y0)
+            grids = helper_line_high(x1, y1, x0, y0, grid_point_rows, grid_point_cols)
         else:
             # Slanting from left to right
-            grids = helper_line_high(x0, y0, x1, y1)
+            grids = helper_line_high(x0, y0, x1, y1, grid_point_rows, grid_point_cols)
 
     return grids
 
-def helper_line_low(x0, y0, x1, y1):
+def helper_line_low(x0, y0, x1, y1, grid_point_rows, grid_point_cols):
     grids = []
     # Calculate the slope (m)
     m = (y1 - y0) / (x1 - x0)
@@ -135,14 +153,16 @@ def helper_line_low(x0, y0, x1, y1):
     # Calculate the y-intercept (c)
     c = y0 - m * x0
 
-    for x in range(x0,x1+1):
+    #We omit the first index
+    for x in range(x0+1,x1+1):
         # Calculate y for the given x
         y = m * x + c
-        grids.append((x,y))
+        # We get the ceil of y to get the top right corner of a grid
+        grids.append(get_grid_identifier(x,math.ceil(y),grid_point_rows,grid_point_cols))
 
     return grids
 
-def helper_line_high(x0, y0, x1, y1):
+def helper_line_high(x0, y0, x1, y1, grid_point_rows, grid_point_cols):
     grids = []
     # Calculate the slope (m)
     m = (y1 - y0) / (x1 - x0)
@@ -150,16 +170,16 @@ def helper_line_high(x0, y0, x1, y1):
     # Calculate the y-intercept (c)
     c = y0 - m * x0
 
-    for y in range(y0,y1-1,-1):
+    for y in range(y0,y1,-1):
         # Calculate x for the given y
         x = (y - c) / m
-        grids.append((x,y))
-
+        print(math.ceil(x),y)
+        grids.append(get_grid_identifier(math.ceil(x),y,grid_point_rows,grid_point_cols))
     return grids
 
 def main():
     # Generate grid with 0.08 degree step
-    grid = generate_grid_points(9.6, 9.1 , 78.8, 80.2, 0.08)
+    grid = generate_grid_points(9.6, 9.1 , 78.8, 79.4, 0.08)
     # for row in grid:
     #     for pos in row:
     #         print(pos)
@@ -171,7 +191,9 @@ def main():
     # for g in grid:
     #     print(g)
 
-    calculate_orientation(grid,[(9.6, 78.8),(9.1, 80.2)],0.08)
+    # calculate_orientation(grid,[(9.6, 78.8),(9.1, 80.2)],0.08)
+
+    print(helper_line_high(2,8,0,0,3,9))
 
     #ship speed calculation
     #def __init__(self, ship_speed, wave_height, displacement, k1, k2, k3, k4, wind_speed, angle):
