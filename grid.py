@@ -146,6 +146,7 @@ def get_intercepting_grid(lat1,lon1,lat2,lon2,start_lat1,start_lon1,step,grid_po
 
     return grids
 
+# Handles down to up now, should handle bottom to down, add a new parameter for this
 def helper_line_low(x0, y0, x1, y1, grid_point_rows, grid_point_cols):
     grids = []
     distances = []
@@ -164,12 +165,15 @@ def helper_line_low(x0, y0, x1, y1, grid_point_rows, grid_point_cols):
     for x in range(x0+1,x1+1):
         # Calculate y for the given x
         y = m * x + c
-        # Check if the line cuts two grids at the same time, calculate for both grids
-        if( int(prev_y) < int(y) and x != x1):
-            y_floor = math.floor(y)
-            x_inter = (y_floor - c)/ m
+        # Check if the line cuts two grids at the same time, calculate for both grids if it does
+        if( int(prev_y) < int(y) and x != x1): # Suppose previous y is 2.9 and current y is 3.1 then there is an intersection between
+            # suppose y = 2.2 and x intersection is 8.5
+            y_floor = math.floor(y) # Stores the floor of y = 2, we use this to find the bottom grid
+            x_inter = (y_floor - c)/ m # Stores the intersection = 8.5
+            # Gets the first grid, top right point will be current x = 9 and y = 2
             grids.append(get_grid_identifier(x,y_floor,grid_point_rows,grid_point_cols))  
             distances.append(calculate_distance(prev_x, prev_y, x_inter, y_floor)) 
+            # Gets the second grid, top right point will be current x = 9 and y = 3
             grids.append(get_grid_identifier(x,math.ceil(y),grid_point_rows,grid_point_cols)) 
             distances.append(calculate_distance(x_inter, y_floor, x, y)) 
         # Calculate for one grid
@@ -179,8 +183,9 @@ def helper_line_low(x0, y0, x1, y1, grid_point_rows, grid_point_cols):
         prev_x = x
         prev_y = y
 
-    return grids , distances
+    return grids , distances  
 
+# Handles left to right now, should handle left to right, add a new parameter for this
 def helper_line_high(x0, y0, x1, y1, grid_point_rows, grid_point_cols):
     grids = []
     distances = []
@@ -193,18 +198,29 @@ def helper_line_high(x0, y0, x1, y1, grid_point_rows, grid_point_cols):
     # Tracks the previous point to calculate the distance
     prev_x, prev_y = x0, y0 
 
-    for y in range(y0,y1,-1):
+   # Iterate over y from y0 to y1 (going downwards)
+    for y in range(y0, y1, -1):
         # Calculate x for the given y
         x = (y - c) / m
-        print("cur")
-        print(x,y)
-        print("prev")
-        print(prev_x,prev_y)
-        distances.append(calculate_distance(prev_x, prev_y, x, y))
+
+        # Check if the line cuts two grids at the same time
+        if (int(prev_x) < int(x) ):
+            # suppose x = 1.2 and y intersection is 3.5
+            x_floor = math.floor(x) # Stores the floor of x = 1
+            y_inter = m * x_floor + c # Stores the intersection = 3.5
+            # Gets the first grid, top right point will be current x = 1 and y = 4
+            grids.append(get_grid_identifier(x_floor + 1, y, grid_point_rows, grid_point_cols))  
+            distances.append(calculate_distance(prev_x, prev_y, x_floor, y_inter)) 
+            # Gets the second grid, top right point will be current x = 2 and y = 4
+            grids.append(get_grid_identifier(x_floor + 1, y + 1, grid_point_rows, grid_point_cols)) 
+            distances.append(calculate_distance(x_floor, y_inter, x, y)) 
+        else:
+            grids.append(get_grid_identifier(math.floor(x) + 1, y, grid_point_rows, grid_point_cols))
+            distances.append(calculate_distance(prev_x, prev_y, x, y))
         prev_x = x
         prev_y = y
-        grids.append(get_grid_identifier(math.ceil(x),y,grid_point_rows,grid_point_cols))
-    return grids , distances
+
+    return grids, distances
 
 def main():
     # Generate grid with 0.08 degree step
@@ -222,7 +238,9 @@ def main():
 
     # calculate_orientation(grid,[(9.6, 78.8),(9.1, 80.2)],0.08)
 
-    print(helper_line_low(0,0,17,2,18,3))
+    #print(helper_line_low(0,6,25,0,26,7))
+
+    print(helper_line_high(0,6,2,1,3,7))
 
     #ship speed calculation
     #def __init__(self, ship_speed, wave_height, displacement, k1, k2, k3, k4, wind_speed, angle):
