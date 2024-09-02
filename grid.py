@@ -8,8 +8,8 @@ def calculate_distance(x1, y1, x2, y2):
 
 def generate_grid_points(start_lat, end_lat, start_lon, end_lon, step_deg):
     """
-   Generates points which are geographical coordinates (latitude and longitude), 
-   based on the specified start and end points with a given step size in degrees. 
+   Generates the intermediate points which are geographical coordinates (latitude and longitude)
+   between the start and end position on the map with a given step size in degrees. 
    For example, if the step size is 0.08 degrees, then the grid will have a size 
    of 0.08 degrees. 4 adjacent points make one grid.
 
@@ -65,7 +65,7 @@ def calculate_orientation(points_grid, path, step_size):
         180 degrees: South
         270 degrees: West
     Returns:
-        The orientation of ship in each grid that lies between the two points based on the direction it 
+        The orientation of ship in each grid that lies between the two points on the path based on the direction it 
         moves with respect to north, if the ship doesn't travel through that grid, then it is represented as -1
     Parameter:
         points_grid -> The input grid containing latitude and longitude points.
@@ -196,7 +196,7 @@ def helper_line_low(x0, y0, x1, y1, grid_point_rows, grid_point_cols):
 
     return grids , distances  
 
-# Handles left to right now, should handle left to right, add a new parameter for this
+# Handles right to left now, should handle left to right, add a new parameter for this
 def helper_line_high(x0, y0, x1, y1, grid_point_rows, grid_point_cols):
     grids = []
     distances = []
