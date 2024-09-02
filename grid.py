@@ -11,7 +11,7 @@ def generate_grid_points(start_lat, end_lat, start_lon, end_lon, step_deg):
    Generates points which are geographical coordinates (latitude and longitude), 
    based on the specified start and end points with a given step size in degrees. 
    For example, if the step size is 0.08 degrees, then the grid will have a size 
-   of 0.08 degrees. 4 adjancent points make one grid.
+   of 0.08 degrees. 4 adjacent points make one grid.
 
    8,10--8,11--8,12
     |   1  |  2   |
@@ -56,7 +56,7 @@ def generate_grid_points(start_lat, end_lat, start_lon, end_lon, step_deg):
 
     return grid
 
-def calculate_orientation(grid, path, step_size):
+def calculate_orientation(points_grid, path, step_size):
     '''
     Calculates the orientation of the ship with respect to north in each grid, that is the bearing angle.
     Representation of the 4 direction in degree
@@ -65,12 +65,15 @@ def calculate_orientation(grid, path, step_size):
         180 degrees: South
         270 degrees: West
     Returns:
-        A grid which contains the orientation of the ship, if the ship doesn't travel through that grid, then it is represented as -1
+        The orientation of ship in each grid that lies between the two points based on the direction it 
+        moves with respect to north, if the ship doesn't travel through that grid, then it is represented as -1
     Parameter:
-        grid -> The input grid containing latitude and longitude points.
+        points_grid -> The input grid containing latitude and longitude points.
         path -> The path of the ship as a list of (latitude, longitude). 
         step_deg -> The step size in degrees for latitude and longitude.
     '''
+    # If this is my path 80,1 -> 91,3 -> 103,4 -> 102,7
+    # We iterate between each pair of successive points (80,1 -> 91,3), (91,3 -> 103,4), (103,4 -> 102,7)
     for i in range(len(path) - 1):
         lat1, lon1 = path[i]
         lat2, lon2 = path[i+1]
@@ -93,6 +96,10 @@ def get_grid_identifier(x, y, grid_point_rows,grid_point_cols):
     """
     Calculate the grid identifier based on coordinates (x, y).
     Given a point on the top right corner of a grid, we return the grid index
+    (0,0) (0,1) 
+         1    
+    (1,0) (1,1)
+    For the above grid, if we input top index (0,1) we get the grid index 1
     """
     # Top Right in cartesian, bottom right in our grid
     grid_index = ((grid_point_rows - 1) * (y - 1)) + x
@@ -114,7 +121,7 @@ def get_intercepting_grid(lat1,lon1,lat2,lon2,start_lat1,start_lon1,step,grid_po
         grid_point_rows: Number of points in the grid row
         grid_point_cols: Number of points in the grid col
     '''
-
+    
     # Below is our grid looks like, which is normalized to integers from lat,lon based on the step, the values
     # in between the points is the grid number
     # (0,0) (0,1) (0,2) (0,3) (0,4) (0,5) (0,6)
@@ -122,20 +129,24 @@ def get_intercepting_grid(lat1,lon1,lat2,lon2,start_lat1,start_lon1,step,grid_po
     # (1,0) (1,1) (1,2) (1,3) (1,4) (1,5) (1,6)
     #      2     4     6     8    10     12 
     # (2,0) (2,1) (2,2) (2,3) (2,4) (2,5) (2,6)
-    # Since we are using cartesian coordinates, hence we consider the grid index from top to bottom, left to right
+    # When we consider a map, the latitude is the X axis and the longitude is the Y axis
+    # Since we are using cartesian coordinates we flip the notation, therefore Y as horizontal and X as vertical
+    # therfore during iteration we consider the grid index from top to bottom, left to right
 
     x0 = int((lon1 - start_lon1) / step)
     y0 = int((start_lat1 - lat1) / step)
     x1 = int((lon2 - start_lon1) / step)
     y1 = int((start_lat1 - lat2) / step)
 
+    # Line is closer to the horizontal axis 
     if abs(y1 - y0) < abs(x1 - x0):
         if x0 > x1:
-            # Slanting from right to left
+            # Slanting from right to left 
             grids = helper_line_low(x1, y1, x0, y0, grid_point_rows, grid_point_cols)
         else:
-            # Slanting from left to right
+            # Slanting from left to right 
             grids = helper_line_low(x0, y0, x1, y1, grid_point_rows, grid_point_cols)
+    # Line is closer to the vertical axis 
     else:
         if y0 > y1:
             # Slanting from right to left
