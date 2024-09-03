@@ -1,8 +1,15 @@
+'''
+This thing implements the ACO algorithm to find the shortest path between the start and end point on a grid, with real time map data.
+But this shit runs for 2 hrs and still not accurate........
+try increasing the step_size in the obstacles.py or reducing the ant number.
+Fine-tuning the parameter can solve the pblm upto some level.
+'''
+
 import numpy as np
 import random
 import math
 import csv
-from generategrid import generate_grid
+from map_handler import dummy_get_start_end_coordinates
 from obstacles import get_obstacle_indices
 
 # Get start and end coordinates using your provided function
@@ -18,27 +25,32 @@ grid = generate_grid_points(9.6, 9.1, 78.8, 80.2, 0.08)
 
 # Flatten the grid to a list of coordinates
 nodes = {i: coord for i, coord in enumerate([coord for row in grid for coord in row])}
-# print('nodes:',nodes)
 
-# Define the start and end nodes (using indices from the grid)
-start_node = 0  # Corresponds to the first coordinate in the grid
-end_node = len(nodes) - 1  # Corresponds to the last coordinate in the grid
-
-# Parameters for ACO
-num_ants = 10
-num_iterations = 100
-alpha = 1.0  # Pheromone importance
-beta = 0.07   # Heuristic importance (inverse of distance)
-evaporation_rate = 0.3
-pheromone_deposit = 1.0
-tau_0 = 1.0  # Initial pheromone level
-
-# Function to calculate Euclidean distance between two nodes
+# Function to calculate Euclidean distance between two points
 def euclidean_distance(coord1, coord2):
     return math.sqrt((coord2[0] - coord1[0]) ** 2 + (coord2[1] - coord1[1]) ** 2)
 
+# Find indices of start and end coordinates in the grid
+start_node = min(nodes, key=lambda k: euclidean_distance(nodes[k], start_coords))
+end_node = min(nodes, key=lambda k: euclidean_distance(nodes[k], end_coords))
+
+# Parameters for ACO
+num_ants = 20  # Increased number of ants to explore more paths
+num_iterations = 200  # Increased number of iterations for better convergence
+alpha = 0.7  # Reduced alpha to balance pheromone and heuristic importance
+beta = 3.0  # Increased beta to give more importance to the heuristic (distance)
+evaporation_rate = 0.1  # Reduced evaporation rate to maintain pheromone trails longer
+pheromone_deposit = 2.0  # Increased pheromone deposit to reinforce good paths
+tau_0 = 1.0  # Initial pheromone level remains the same
+
 # Initialize pheromone levels on each edge
 pheromone = np.full((len(nodes), len(nodes)), tau_0)
+
+# Avoid obstacles by setting pheromone levels to 0
+for i, coord in nodes.items():
+    if coord in obstacle_indices:
+        pheromone[i, :] = 0
+        pheromone[:, i] = 0
 
 # Function to choose the next node based on the probability distribution
 def choose_next_node(probabilities):
@@ -55,7 +67,6 @@ def choose_next_node(probabilities):
 with open('aco_paths.csv', 'w', newline='') as csvfile:
     fieldnames = ['Iteration', 'Path', 'Distance']
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-
     writer.writeheader()
 
     # ACO main loop
@@ -72,9 +83,7 @@ with open('aco_paths.csv', 'w', newline='') as csvfile:
             while current_node != end_node:
                 probabilities = []
                 for next_node in nodes:
-
                     if (next_node not in visited) and (next_node not in obstacle_indices):
-                        # print("next_node:", next_node) # Avoid visited nodes and obstacles
                         pheromone_level = pheromone[current_node][next_node] ** alpha
                         heuristic_value = (1 / euclidean_distance(nodes[current_node], nodes[next_node])) ** beta
                         probability = pheromone_level * heuristic_value
@@ -93,35 +102,27 @@ with open('aco_paths.csv', 'w', newline='') as csvfile:
                 all_paths.append((path, total_distance))
                 all_distances.append(total_distance)
 
+        # Evaporate pheromone
         pheromone *= (1 - evaporation_rate)
-        for path, distance in all_paths:
+
+        # Reinforce pheromone on successful paths
+        if all_paths:
+            shortest_path = min(all_paths, key=lambda x: x[1])
+            path, distance = shortest_path
+
             pheromone_increase = pheromone_deposit / distance
             for i in range(len(path) - 1):
                 pheromone[path[i]][path[i + 1]] += pheromone_increase
                 pheromone[path[i + 1]][path[i]] += pheromone_increase  # assuming undirected graph
 
-        if all_paths:
-            shortest_path = min(all_paths, key=lambda x: x[1])
-            path_nodes = [nodes[node] for node in shortest_path[0]]
-            path_str = " -> ".join(map(str, path_nodes))
+            # Write all paths for this iteration to the CSV file
+            for path, distance in all_paths:
+                path_str = " -> ".join(map(str, [nodes[node] for node in path]))
+                writer.writerow({'Iteration': iteration + 1, 'Path': path_str, 'Distance': distance})
 
-            writer.writerow({
-                'Iteration': iteration + 1,
-                'Path': path_str,
-                'Distance': shortest_path[1]
-            })
+            print(f"Iteration {iteration + 1}: Best path (nodes) = {path}, Distance = {distance}")
 
-            print(f"Iteration {iteration + 1}: Best path (nodes) = {shortest_path[0]}, Distance = {shortest_path[1]}")
-
-if all_paths:
-    final_shortest_path = min(all_paths, key=lambda x: x[1])
-    final_path_coords = [nodes[node] for node in final_shortest_path[0]]
-
-    print(f"\nFinal best path (nodes): {final_shortest_path[0]}")
-    print(f"Final best path (coordinates): {final_path_coords}")
-    print(f"Final distance: {final_shortest_path[1]}")
-else:
-    print("No valid paths found.")
-
-
-
+        # Adaptive strategy: Gradually increase alpha and beta as the algorithm progresses
+        if iteration > num_iterations // 2:
+            alpha = min(2.0, alpha + 0.1)  # Gradually increase alpha, max 2.0
+            beta = min(5.0, beta + 0.2)  # Gradually increase beta, max 5.0

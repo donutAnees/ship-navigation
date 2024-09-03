@@ -8,10 +8,10 @@ LOCATIONIQ_API_KEY = os.getenv("API_KEY")
 
 def dummy_get_start_end_coordinates():
 
-    start_lat = 9.20 # Ex start lat
-    start_lon =  79.20 # Ex start long
-    end_lat =  9.80 # Ex end lat
-    end_lon = 79.80 # Ex end long
+    start_lat = 9.12  # Ex start lat
+    start_lon =  78.99 # Ex start long
+    end_lat =  9.56 # Ex end lat
+    end_lon = 80.52 # Ex end long
 
     return (start_lat, start_lon), (end_lat, end_lon)
 
