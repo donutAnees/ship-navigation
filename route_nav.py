@@ -8,9 +8,13 @@ from obstacles import get_obstacle_indices
 # Get start and end coordinates using your provided function
 start_coords, end_coords = (9.6, 79.2), (9.1, 79.9)  # Dummy start and end coordinates
 step_size = 0.05
+from grid import generate_grid_points
 
 # Generate grid based on these coordinates
 obstacle_indices, grid = get_obstacle_indices()
+# Generate grid with 0.08 degree step
+grid = generate_grid_points(9.6, 9.1, 78.8, 80.2, 0.08)
+#print(grid)
 
 # Flatten the grid to a list of coordinates
 nodes = {i: coord for i, coord in enumerate([coord for row in grid for coord in row])}
