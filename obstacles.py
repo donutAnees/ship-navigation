@@ -26,6 +26,41 @@ def detect_obstacles(start_coords, end_coords, step_size=0.04):
 
     return obstacle_indices, grid
 
+def calculate_midp(start_coords, end_coords, step_size=1):
+    start_lat, start_lon = start_coords
+    end_lat, end_lon = end_coords
+
+    """
+    calculating the midpoints representesd by the start cords and end cords 
+
+    Parameters:
+        start_lat: Start latitude.
+        start_lon: Start longitude.
+        end_lat: End latitude.
+        end_lon: End longitude.
+        step_size: Step size for grid cells.
+
+    Returns: A list of tuples representing the midpoints of the grid cells.
+    """
+
+    midpoints=[]
+    latitude = start_lat
+    while (latitude + step_size <= end_lat):
+        longitude = start_lon
+        while (longitude + step_size <= end_lon):
+            mid_lat = latitude + step_size / 2
+            mid_lon = longitude + step_size / 2
+            midpoints.append((round(mid_lat, 2), round(mid_lon, 2)))
+            longitude += step_size
+        latitude += step_size
+
+    return midpoints
+
+
+
+
+
+
 # obstacles = [
 #         (9.3, 79.7), (9.3, 79.75), (9.3, 79.8), (9.35, 79.2),
 #         (9.35, 79.25), (9.3, 79.3), (9.35, 79.35),(9.3, 79.7), (9.3, 79.75), (9.3, 79.8), (9.35, 79.2),
