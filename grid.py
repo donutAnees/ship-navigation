@@ -6,7 +6,7 @@ def calculate_distance(x1, y1, x2, y2):
     # Euclidean Formula
     return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
 
-def generate_grid_points(start_lat, end_lat, start_lon, end_lon, step_deg):
+def generate_grid_points(start_lat, start_lon, end_lat, end_lon, step_deg):
     """
    Generates the intermediate points which are geographical coordinates (latitude and longitude)
    between the start and end position on the map with a given step size in degrees. 
@@ -22,8 +22,8 @@ def generate_grid_points(start_lat, end_lat, start_lon, end_lon, step_deg):
 
     Parameters:
         start_lat: The starting latitude.
-        end_lat: The ending latitude.
         start_lon: The starting longitude.
+         end_lat: The ending latitude.
         end_lon: The ending longitude.
         step_deg: The step size in degrees for latitude and longitude.
     Returns:
@@ -56,7 +56,7 @@ def generate_grid_points(start_lat, end_lat, start_lon, end_lon, step_deg):
 
     return grid
 
-def calculate_orientation(points_grid, path, step_size):
+def calculate_orientation_and_distance(points_grid, path, step_size):
     '''
     Calculates the orientation of the ship with respect to north in each grid, that is the bearing angle.
     Representation of the 4 direction in degree
@@ -64,14 +64,22 @@ def calculate_orientation(points_grid, path, step_size):
         90 degrees: East
         180 degrees: South
         270 degrees: West
+    Calculates the distance of the ship in each of the grid
     Returns:
-        The orientation of ship in each grid that lies between the two points on the path based on the direction it 
-        moves with respect to north, if the ship doesn't travel through that grid, then it is represented as -1
+       A grid where for each grid cell that the ship passes through, we record the orientation of the ship within that cell and the distance 
+       it travels between two points, relative to the north direction, as (orientation, distance). If the ship does not travel 
+       through a grid cell, it is represented as -1.
     Parameter:
         points_grid -> The input grid containing latitude and longitude points.
         path -> The path of the ship as a list of (latitude, longitude). 
         step_deg -> The step size in degrees for latitude and longitude.
     '''
+    # Stores our result
+    rows = len(points_grid)
+    cols = len(points_grid[0])
+    # Create a grid with all values initialized to -1
+    orientation_distance_grid = [-1] * (rows * cols)
+
     # If this is my path 80,1 -> 91,3 -> 103,4 -> 102,7
     # We iterate between each pair of successive points (80,1 -> 91,3), (91,3 -> 103,4), (103,4 -> 102,7)
     for i in range(len(path) - 1):
@@ -88,9 +96,15 @@ def calculate_orientation(points_grid, path, step_size):
         brng = (thetha * 180 / math.pi + 360) % 360 # In degree
 
         # Find all the grids which intercept the path between start and end lat lon
-        grids = get_intercepting_grid(lat1,lon1,lat2,lon2,points_grid[0][0][0],points_grid[0][0][1],step_size,len(points_grid),len(points_grid[0]))
-        for g in grids:
-            print(g)  
+        grids , distances = get_intercepting_grid_with_distance(lat1,lon1,lat2,lon2,points_grid[0][0][0],points_grid[0][0][1],step_size,len(points_grid),len(points_grid[0]))
+        
+        # Populate the orientation grid with the orientation and distance for each grid the ship passes through
+        count = 0
+        for grid in grids:
+            orientation_distance_grid[grid-1] = (brng,distances[count])
+            count += 1
+
+        return orientation_distance_grid
 
 def get_grid_identifier(x, y, grid_point_rows,grid_point_cols):
     """
@@ -105,11 +119,11 @@ def get_grid_identifier(x, y, grid_point_rows,grid_point_cols):
     grid_index = ((grid_point_rows - 1) * (y - 1)) + x
     return grid_index
 
-def get_intercepting_grid(lat1,lon1,lat2,lon2,start_lat1,start_lon1,step,grid_point_rows,grid_point_cols):
+def get_intercepting_grid_with_distance(lat1,lon1,lat2,lon2,start_lat1,start_lon1,step,grid_point_rows,grid_point_cols):
     '''
-    Finds all the grids which touches the path of the ship
+    Finds all the grids which touches the path of the ship and the travel distance of the ship in that grid
     Returns:
-        A list of indexes (row, column) in the grid where the ship's path intersects.
+        A list of indexes (row, column) in the grid where the ship's path intersects and a list of distances of those grids.
     Parameters:
         lat1: The starting latitude of the path.
         lat2: The ending latitude of the path.
@@ -135,27 +149,27 @@ def get_intercepting_grid(lat1,lon1,lat2,lon2,start_lat1,start_lon1,step,grid_po
 
     x0 = int((lon1 - start_lon1) / step)
     y0 = int((start_lat1 - lat1) / step)
-    x1 = int((lon2 - start_lon1) / step)
-    y1 = int((start_lat1 - lat2) / step)
+    x1 = int((lat2 - start_lat1) / step)
+    y1 = int((lon2 - start_lon1) / step)
 
     # Line is closer to the horizontal axis 
     if abs(y1 - y0) < abs(x1 - x0):
         if x0 > x1:
             # Slanting from right to left 
-            grids = helper_line_low(x1, y1, x0, y0, grid_point_rows, grid_point_cols)
+            grids , distances= helper_line_low(x1, y1, x0, y0, grid_point_rows, grid_point_cols)
         else:
             # Slanting from left to right 
-            grids = helper_line_low(x0, y0, x1, y1, grid_point_rows, grid_point_cols)
+            grids , distances= helper_line_low(x0, y0, x1, y1, grid_point_rows, grid_point_cols)
     # Line is closer to the vertical axis 
     else:
         if y0 > y1:
             # Slanting from right to left
-            grids = helper_line_high(x1, y1, x0, y0, grid_point_rows, grid_point_cols)
+            grids , distances= helper_line_high(x1, y1, x0, y0, grid_point_rows, grid_point_cols)
         else:
             # Slanting from left to right
-            grids = helper_line_high(x0, y0, x1, y1, grid_point_rows, grid_point_cols)
+            grids , distances= helper_line_high(x0, y0, x1, y1, grid_point_rows, grid_point_cols)
 
-    return grids
+    return grids , distances
 
 # Handles down to up now, should handle bottom to down, add a new parameter for this
 def helper_line_low(x0, y0, x1, y1, grid_point_rows, grid_point_cols):
@@ -187,7 +201,9 @@ def helper_line_low(x0, y0, x1, y1, grid_point_rows, grid_point_cols):
         # Calculate y for the given x
         y = m * x + c
         # Check if the line cuts two grids at the same time, calculate for both grids if it does
-        if( int(prev_y) < int(y) and x != x1): # Suppose previous y is 2.9 and current y is 3.1 then there is an intersection between
+        # int(y) != y is for seeing if the line is going through values like (2,3) (1,1) where y is integer in such case we can ignore, since it is passing through a integer point
+        # rather than a float point which is what cuts through 2 grids
+        if( int(prev_y) < int(y) and x != x1 and int(y) != y): # Suppose previous y is 2.9 and current y is 3.1 then there is an intersection between
             # suppose y = 2.2 and x intersection is 8.5
             y_floor = math.floor(y) # Stores the floor of y = 2, we use this to find the bottom grid
             x_inter = (y_floor - c)/ m # Stores the intersection = 8.5
@@ -228,7 +244,7 @@ def helper_line_high(x0, y0, x1, y1, grid_point_rows, grid_point_cols):
         x = (y - c) / m
 
         # Check if the line cuts two grids at the same time
-        if (int(prev_x) < int(x) ):
+        if (int(prev_x) < int(x) and int(x) != x):
             # suppose x = 1.2 and y intersection is 3.5
             x_floor = math.floor(x) # Stores the floor of x = 1
             y_inter = m * x_floor + c # Stores the intersection = 3.5
@@ -248,7 +264,7 @@ def helper_line_high(x0, y0, x1, y1, grid_point_rows, grid_point_cols):
 
 def main():
     # Generate grid with 0.08 degree step
-    grid = generate_grid_points(9.6, 9.1 , 78.8, 79.4, 0.08)
+    grid = generate_grid_points(2,2,8,4,1)
     # for row in grid:
     #     for pos in row:
     #         print(pos)
@@ -256,11 +272,11 @@ def main():
     start_time = time.time()
     
     # # Print the points
-    # print("Points the line passes through:")
+    # print("Points the line passes through:")s
     # for g in grid:
     #     print(g)
 
-    #calculate_orientation(grid,[(9.6, 78.8),(9.1, 80.2)],0.08)
+    # calculate_orientation(grid,[(9.6, 78.8),(9.1, 80.2)],0.08)
 
     print(helper_line_low(10,0,0,4,11,5))
     print(helper_line_low(0,0,10,4,11,5))

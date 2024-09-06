@@ -54,14 +54,14 @@ for i, coord in nodes.items():
 
 # Function to choose the next node based on the probability distribution
 def choose_next_node(probabilities):
-    total = sum(prob for prob, node in probabilities)
-    rand = random.uniform(0, total)
-    current = 0
+    total = sum(prob for prob, node in probabilities) # Takes the sum of all probabilities Initialized in the `probabilities[]`
+    rand = random.uniform(0, total) # chooses a number at random from 0 to the sum of probabilities
+    current = 0 # This variable keeps a cumulative sum of the probability value from the list of probabilities while iterating through the list
     for prob, node in probabilities:
         current += prob
-        if current >= rand:
+        if current >= rand: # when the cumulative sum is more than the random number chosen, the last node paired with that probability value will be selected as the next node
             return node
-    return probabilities[-1][1]
+    return probabilities[-1][1] # On the unlike that sum does not increase past the threshold(rand) then the last node in the list is chosen as the next node.
 
 # Open CSV file for writing
 with open('aco_paths.csv', 'w', newline='') as csvfile:
@@ -71,23 +71,27 @@ with open('aco_paths.csv', 'w', newline='') as csvfile:
 
     # ACO main loop
     for iteration in range(num_iterations):
-        all_paths = []
-        all_distances = []
+        all_paths = [] # a nested list that keeps track of the various paths chosen
+        all_distances = [] # Keeps track of the distances of the paths
 
         for ant in range(num_ants):
-            path = [start_node]
-            visited = set(path)
-            current_node = start_node
+            path = [start_node] # The initial node is always the start node
+            visited = set(path) # Keeps track of the visited nodes to avoid repetition
+            current_node = start_node 
             total_distance = 0
 
-            while current_node != end_node:
-                probabilities = []
-                for next_node in nodes:
-                    if (next_node not in visited) and (next_node not in obstacle_indices):
-                        pheromone_level = pheromone[current_node][next_node] ** alpha
+            while current_node != end_node: # Checking if the end of the path is reached
+                probabilities = [] # The list of tuples that is used to find the next node in `choose_next_node()`
+                                   # This list will be recalculated when the current node changes.
+                for next_node in nodes: # iterating through the nodes dictionary.
+                    if (next_node not in visited) and (next_node not in obstacle_indices): # ensuring that a new node is chosen that is not an obstacle
+                        pheromone_level = pheromone[current_node][next_node] ** alpha # The pheromone level is checked by incrementing the pheromone value to the power of alpha (
+                        # alpha is the variable indicating the importance of the pheromone, in this case, there is a reduced importance for pheromones. 
                         heuristic_value = (1 / euclidean_distance(nodes[current_node], nodes[next_node])) ** beta
-                        probability = pheromone_level * heuristic_value
-                        probabilities.append((probability, next_node))
+                        # the distance is calculated from the current node.
+                        # The inverse of distance is multiplied by its importance factor; in this case, nodes that are farther from each other are preferred.
+                        probability = pheromone_level * heuristic_value 
+                        probabilities.append((probability, next_node)) # The probability and corresponding node are stored as a tuple in the probabilities list.
 
                 if not probabilities:
                     break
