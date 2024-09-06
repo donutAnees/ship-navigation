@@ -171,7 +171,6 @@ def get_intercepting_grid_with_distance(lat1,lon1,lat2,lon2,start_lat1,start_lon
 
     return grids , distances
 
-# Handles down to up now, should handle bottom to down, add a new parameter for this
 def helper_line_low(x0, y0, x1, y1, grid_point_rows, grid_point_cols):
     grids = []
     distances = []
@@ -209,29 +208,35 @@ def helper_line_low(x0, y0, x1, y1, grid_point_rows, grid_point_cols):
             x_inter = (y_floor - c)/ m # Stores the intersection = 8.5
             # Gets the first grid, top right point will be current x = 9 and y = 2
             grids.append(get_grid_identifier(x + offset,y_floor,grid_point_rows,grid_point_cols))  
-            print(x,y_floor)
             distances.append(calculate_distance(prev_x, prev_y, x_inter, y_floor)) 
             # Gets the second grid, top right point will be current x = 9 and y = 3
             grids.append(get_grid_identifier(x + offset,math.ceil(y),grid_point_rows,grid_point_cols)) 
             distances.append(calculate_distance(x_inter, y_floor, x, y)) 
-            print(x,math.ceil(y))
         # Calculate for one grid
         else:
             grids.append(get_grid_identifier(x + offset,math.ceil(y),grid_point_rows,grid_point_cols)) 
             distances.append(calculate_distance(prev_x, prev_y, x, y)) 
-            print(x,math.ceil(y))
         prev_x = x
         prev_y = y
 
     return grids , distances  
 
-# Handles right to left now, should handle left to right, add a new parameter for this
 def helper_line_high(x0, y0, x1, y1, grid_point_rows, grid_point_cols):
     grids = []
     distances = []
     # Calculate the slope (m)
     m = (y1 - y0) / (x1 - x0)
-    
+
+    # yi stores how we want to traverse in the for loop, forward or backward
+    yi = 1 # If 1 we go up
+    if(m < 0):
+        yi = -1 # If -1 we go down
+
+    offset = 1
+    # If we reversing, we get the bottom right point therefore we use this offset to add 1 to y if we are
+    if(m < 0):
+        offset = 0
+
     # Calculate the y-intercept (c)
     c = y0 - m * x0
 
@@ -239,7 +244,7 @@ def helper_line_high(x0, y0, x1, y1, grid_point_rows, grid_point_cols):
     prev_x, prev_y = x0, y0 
 
    # Iterate over y from y0 to y1 (going downwards)
-    for y in range(y0, y1, -1):
+    for y in range(y0, y1, yi):
         # Calculate x for the given y
         x = (y - c) / m
 
@@ -249,13 +254,13 @@ def helper_line_high(x0, y0, x1, y1, grid_point_rows, grid_point_cols):
             x_floor = math.floor(x) # Stores the floor of x = 1
             y_inter = m * x_floor + c # Stores the intersection = 3.5
             # Gets the first grid, top right point will be current x = 1 and y = 4
-            grids.append(get_grid_identifier(x_floor + 1, y, grid_point_rows, grid_point_cols))  
+            grids.append(get_grid_identifier(x_floor + 1, y, grid_point_rows, grid_point_cols))
             distances.append(calculate_distance(prev_x, prev_y, x_floor, y_inter)) 
             # Gets the second grid, top right point will be current x = 2 and y = 4
             grids.append(get_grid_identifier(x_floor + 1, y + 1, grid_point_rows, grid_point_cols)) 
             distances.append(calculate_distance(x_floor, y_inter, x, y)) 
         else:
-            grids.append(get_grid_identifier(math.floor(x) + 1, y, grid_point_rows, grid_point_cols))
+            grids.append(get_grid_identifier(math.floor(x) + 1, y + offset, grid_point_rows, grid_point_cols))
             distances.append(calculate_distance(prev_x, prev_y, x, y))
         prev_x = x
         prev_y = y
@@ -278,10 +283,10 @@ def main():
 
     # calculate_orientation(grid,[(9.6, 78.8),(9.1, 80.2)],0.08)
 
-    print(helper_line_low(10,0,0,4,11,5))
-    print(helper_line_low(0,0,10,4,11,5))
-
-    #print(helper_line_high(0,6,2,1,3,7))
+    # print(helper_line_low(10,0,0,4,11,5))
+    # print(helper_line_low(0,0,10,4,11,5))
+    print(helper_line_high(0,0,3,10,4,11))
+    print(helper_line_high(0,6,2,1,3,7))
 
     #ship speed calculation
     #def __init__(self, ship_speed, wave_height, displacement, k1, k2, k3, k4, wind_speed, angle):
