@@ -177,7 +177,17 @@ def helper_line_low(x0, y0, x1, y1, grid_point_rows, grid_point_cols):
     distances = []
     # Calculate the slope (m)
     m = (y1 - y0) / (x1 - x0)
-    
+
+    # xi stores how we want to traverse in the for loop, forward or backward
+    xi = 1 # If 1 we go up
+    if(m < 0):
+        xi = -1 # If -1 we go down
+
+    offset = 0
+    # If we reversing, we get the top left point therefore we use this offset to add 1 to x if we are
+    if(m < 0):
+        offset = 1
+
     # Calculate the y-intercept (c)
     c = y0 - m * x0
 
@@ -187,7 +197,7 @@ def helper_line_low(x0, y0, x1, y1, grid_point_rows, grid_point_cols):
     # There will be the case where a line passes through 2 grids at once, to identify such we need to iterate though y and see
     # if the line passes though this and the x is a float, if it is a float it means the line cuts in the middle. To avoid 
     # unneccesary iteration we can just check y, whenever it crosses some integer value
-    for x in range(x0+1,x1+1):
+    for x in range(x0+xi,x1+xi,xi):
         # Calculate y for the given x
         y = m * x + c
         # Check if the line cuts two grids at the same time, calculate for both grids if it does
@@ -198,15 +208,18 @@ def helper_line_low(x0, y0, x1, y1, grid_point_rows, grid_point_cols):
             y_floor = math.floor(y) # Stores the floor of y = 2, we use this to find the bottom grid
             x_inter = (y_floor - c)/ m # Stores the intersection = 8.5
             # Gets the first grid, top right point will be current x = 9 and y = 2
-            grids.append(get_grid_identifier(x,y_floor,grid_point_rows,grid_point_cols))  
+            grids.append(get_grid_identifier(x + offset,y_floor,grid_point_rows,grid_point_cols))  
+            print(x,y_floor)
             distances.append(calculate_distance(prev_x, prev_y, x_inter, y_floor)) 
             # Gets the second grid, top right point will be current x = 9 and y = 3
-            grids.append(get_grid_identifier(x,math.ceil(y),grid_point_rows,grid_point_cols)) 
+            grids.append(get_grid_identifier(x + offset,math.ceil(y),grid_point_rows,grid_point_cols)) 
             distances.append(calculate_distance(x_inter, y_floor, x, y)) 
+            print(x,math.ceil(y))
         # Calculate for one grid
         else:
-            grids.append(get_grid_identifier(x,math.ceil(y),grid_point_rows,grid_point_cols)) 
+            grids.append(get_grid_identifier(x + offset,math.ceil(y),grid_point_rows,grid_point_cols)) 
             distances.append(calculate_distance(prev_x, prev_y, x, y)) 
+            print(x,math.ceil(y))
         prev_x = x
         prev_y = y
 
@@ -263,9 +276,12 @@ def main():
     # for g in grid:
     #     print(g)
 
-    print(calculate_orientation_and_distance(grid,[(2,2),(8,4)],1))
+    # calculate_orientation(grid,[(9.6, 78.8),(9.1, 80.2)],0.08)
 
-    #print(helper_line_low(0,6,25,0,26,7))
+    print(helper_line_low(10,0,0,4,11,5))
+    print(helper_line_low(0,0,10,4,11,5))
+
+    #print(helper_line_high(0,6,2,1,3,7))
 
     #ship speed calculation
     #def __init__(self, ship_speed, wave_height, displacement, k1, k2, k3, k4, wind_speed, angle):
