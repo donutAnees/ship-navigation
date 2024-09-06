@@ -1,5 +1,5 @@
 from map_handler import dummy_get_start_end_coordinates
-from generategrid import generate_grid
+from grid import generate_grid_points
 from map_land_areas import is_land_area
 
 
@@ -13,7 +13,7 @@ def detect_obstacles(start_coords, end_coords, step_size=0.04):
     bbox = (min(start_lon, end_lon), min(start_lat, end_lat), max(start_lon, end_lon), max(start_lat, end_lat))
 
     obstacle_indices = []
-    grid = generate_grid(start_lat-0.20, end_lat+0.20, start_lon-0.20, end_lon+0.20, step_size)
+    grid = generate_grid_points(start_lat-0.20, end_lat+0.20, start_lon-0.20, end_lon+0.20, step_size)
 
     for i, row in enumerate(grid):
         for j, point in enumerate(row):
