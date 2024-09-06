@@ -56,12 +56,12 @@ for i, coord in nodes.items():
 def choose_next_node(probabilities):
     total = sum(prob for prob, node in probabilities) # Takes the sum of all probabilities Initialized in the `probabilities[]`
     rand = random.uniform(0, total) # chooses a number at random from 0 to the sum of probabilities
-    current = 0 # This variable keeps a cumulative list of probabilities as it iterates through the list
+    current = 0 # This variable keeps a cumulative sum of the probability value from the list of probabilities while iterating through the list
     for prob, node in probabilities:
         current += prob
-        if current >= rand: # when the cumulative sum is more than the random number chosen, the last node paired with that probability value will be chosen as the next node
+        if current >= rand: # when the cumulative sum is more than the random number chosen, the last node paired with that probability value will be selected as the next node
             return node
-    return probabilities[-1][1] # On the unlike that sum does not increase pass the threshold(rand) then the last node in the list is chosen as the next node.
+    return probabilities[-1][1] # On the unlike that sum does not increase past the threshold(rand) then the last node in the list is chosen as the next node.
 
 # Open CSV file for writing
 with open('aco_paths.csv', 'w', newline='') as csvfile:
