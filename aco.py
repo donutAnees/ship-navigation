@@ -1,11 +1,10 @@
 from aco_routing import ACO
 import networkx as nx
-import math
 
 '''
 Performs Ant Colony Optimization to identify the optimal routes in the ocean.
 '''
-INF = math.inf
+INF = 99999
 
 # initialize the start and end coordinates of the grid
 grid_start = (0,0)
