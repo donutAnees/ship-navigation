@@ -5,7 +5,8 @@ Calculates the navigation risk using wind angle and wave angle that affect the m
 def find_relative_angles(ship_heading, wave_direction, wind_direction) -> tuple[float]:
     '''Calculates the angles that wind direction and wave direction make with the ship's direction.
         Returns:
-            wind angle and wave angle relative to the direction of the moving ship.
+            1. wind angle relative to the direction of the moving ship
+            2. wave angle relative to the direction of the moving ship
         Parameters:
             ship_heading -> Direction that the ship's bow points at the given time
             wave_direction -> Direction of waves relative to true North
@@ -32,7 +33,8 @@ def find_relative_angles(ship_heading, wave_direction, wind_direction) -> tuple[
 def navigation_risk(wind_angle, wave_angle) -> tuple[float, int]:
     '''Calculates the ship's navigation risk due to the angles that the wind and wave make with respect to the ship's heading.
         Returns:
-            combined navigation risk for the ship at a given point in the ocean
+            1. combined navigation risk for the ship at a given point in the ocean
+            2. a 0 (not risky) or 1 (risky) to indicate whether the current conditions pose a navigation risk
         Parameters:
             wind_angle -> Angle made by the wind with respect to the ship's movement
             wave_angle -> Angle made by the wave with respect to the ship's movement
@@ -47,12 +49,9 @@ def navigation_risk(wind_angle, wave_angle) -> tuple[float, int]:
     total_risk = wind_risk + wave_risk
     # if even one of the parameters is below the required threshold then it must be risky for navigation
     if (wind_risk < 45 or wave_risk < 45):
-        risky = 1
+        risky = 1 # conditions are risky
     else:
-        risky = 0
+        risky = 0 # conditions are not risky
         
     return (total_risk, risky)
-
-
-
-        
+   
