@@ -1,5 +1,6 @@
 from aco_routing import ACO
 import networkx as nx
+import matplotlib.pyplot as plt
 
 '''
 Performs Ant Colony Optimization to identify the optimal routes in the ocean.
@@ -25,9 +26,9 @@ def create_graph(num_rows, num_cols, obstacles):
     # iterate through the number of rows and columns to get the grid indices
     index = 1
     grid = list()
-    for row in range(num_rows):
+    for _ in range(num_rows):
         rows = list()
-        for col in range(num_cols):
+        for _ in range(num_cols):
             rows.append(index)
             index+=1
         grid.append(rows)
@@ -49,9 +50,6 @@ def create_graph(num_rows, num_cols, obstacles):
                     G.add_edge(grid[i][j], grid[i+1][j], cost=1)
                 else:
                     G.add_edge(grid[i][j], grid[i+1][j], cost=INF)  
-
-    # print(G.nodes) [uncomment for debugging]
-    # print(G.edges(data=True)) [uncomment for debugging]
 
     return G
 
@@ -108,6 +106,46 @@ def run_aco(G, start_lat, start_lon, end_lat, end_lon, step, num_rows, num_cols)
 
     return (aco_path, path_cost)
 
+def plot_graph(G, obstacles, path=None):
+    '''Plots the graph using networkx and matplotlib.
+        Parameters:
+            G -> The graph that represents the grid area
+            obstacles -> A list of nodes that represent obstacles
+            path -> The path identified by ACO (optional), list of nodes in the path
+    '''
+    pos = nx.spring_layout(G)  # spring layout for visual separation of nodes
+    plt.figure(figsize=(8, 6))
+    
+    # Separate obstacle nodes and non-obstacle nodes
+    non_obstacle_nodes = [node for node in G.nodes if node not in obstacles]
+    
+    # Draw non-obstacle nodes
+    nx.draw_networkx_nodes(G, pos, nodelist=non_obstacle_nodes, node_color='lightblue', node_size=700, label='Non-Obstacle Nodes')
+    
+    # Draw obstacle nodes
+    nx.draw_networkx_nodes(G, pos, nodelist=obstacles, node_color='red', node_size=700, label='Obstacles')
+
+    # Draw edges
+    nx.draw_networkx_edges(G, pos, edgelist=G.edges, edge_color='gray')
+
+    # Draw edge weights (costs)
+    edge_labels = nx.get_edge_attributes(G, 'cost')
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_color='green')
+
+    # Highlight the path if provided
+    if path:
+        path_edges = [(path[i], path[i+1]) for i in range(len(path)-1)]
+        nx.draw_networkx_edges(G, pos, edgelist=path_edges, edge_color='blue', width=3, label='ACO Path')
+        nx.draw_networkx_nodes(G, pos, nodelist=path, node_color='yellow', node_size=700, label='ACO Path Nodes')
+
+    # Draw node labels
+    nx.draw_networkx_labels(G, pos, font_size=12, font_color='black')
+
+    # Add legend and display the graph
+    plt.legend(scatterpoints=1)
+    plt.title('Graph Representation with Obstacles and ACO Path')
+    plt.show()
+
 
 # checking functionality [uncomment the below lines for debugging]
 # G = create_graph(5, 6, [3,16,19,24,27])
@@ -117,3 +155,8 @@ def run_aco(G, start_lat, start_lon, end_lat, end_lon, step, num_rows, num_cols)
 # print(run_aco(G, 1, 1, 4, 3, 1, 5, 6))
 # print(run_aco(G, 2, 3, 1, 0, 1, 5, 6))
 # print(run_aco(G, 3, 0, 1, 4, 1, 5, 6))
+    
+G = create_graph(5, 6, [7, 3,4, 20, 12, 6, 15])
+path, cost = run_aco(G, 1, 1, 4, 3, 1, 5, 6)
+print(path)
+plot_graph(G, obstacles=[7, 3,4, 20, 12, 6, 15], path=path)
