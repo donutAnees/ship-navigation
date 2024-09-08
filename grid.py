@@ -132,10 +132,9 @@ def get_intercepting_grid_with_distance(lat1,lon1,lat2,lon2,start_lat1,start_lon
         start_lat1: The starting latitude of the grid.
         start_lon2: The starting longitude of the grid.
         step: The size of each grid.
-        grid_point_rows: Number of points in the grid row
-        grid_point_cols: Number of points in the grid col
+        grid_point_rows: Number of points vertically on the grid
+        grid_point_cols: Number of points horizontally on the grid
     '''
-    
     # Below is our grid looks like, which is normalized to integers from lat,lon based on the step, the values
     # in between the points is the grid number
     # (0,0) (0,1) (0,2) (0,3) (0,4) (0,5) (0,6)
