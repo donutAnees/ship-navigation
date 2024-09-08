@@ -111,5 +111,9 @@ def run_aco(G, start_lat, start_lon, end_lat, end_lon, step, num_rows, num_cols)
 
 # checking functionality [uncomment the below lines for debugging]
 # G = create_graph(5, 6, [3,16,19,24,27])
+# G = create_graph(5, 6, [4,9,10,21,28,30])
+# G = create_graph(5, 6, [7,3,20,12,6,15])
 # modify_graph(G, {2:INF, 6:INF})
 # print(run_aco(G, 1, 1, 4, 3, 1, 5, 6))
+# print(run_aco(G, 2, 3, 1, 0, 1, 5, 6))
+# print(run_aco(G, 3, 0, 1, 4, 1, 5, 6))
