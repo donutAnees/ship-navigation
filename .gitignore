@@ -6,3 +6,4 @@ aco_paths.csv
 .idea/
 Data/
 .env
+dataset/**/*

@@ -1,4 +1,3 @@
-from shipSpeed import shipSpeed
 import math
 import time
 
