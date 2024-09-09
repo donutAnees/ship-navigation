@@ -1,5 +1,7 @@
 import math
 import os
+import xarray as xr
+import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from calculatefuel import gridconsumption
@@ -23,7 +25,7 @@ base_path1=r'C:\Users\deeps\Downloads\academia\sih 2024\codes\dataset_converted\
 start_lat1=90
 start_lon1=90
 
-def extract_data_from_dataset(base_path, lat, lon):
+def extract_data_from_converted_dataset(base_path, lat, lon):
     matched_data = []
     # read from nc and based on the lat lon, get data
     for root, dirs, files in os.walk(base_path):
@@ -37,6 +39,32 @@ def extract_data_from_dataset(base_path, lat, lon):
     # convert matched_data to dataframe for better readibility
     matched_df = pd.DataFrame(matched_data)
     return matched_df
+
+base_path_1=r"C:\Users\deeps\Downloads\academia\sih 2024\codes\waves_2023-001"
+base_path_2=r"C:\Users\deeps\Downloads\academia\sih 2024\codes\Hackathon-20240905T154632Z-002"
+def extract_data_from_nc_files(base_path, lat, lon):
+    matched_data = []
+    # read from nc and based on the lat lon, get data
+    for root, dirs, files in os.walk(base_path):
+        for file in files:
+            if file.endswith(".nc"):
+                file_path = os.path.join(root, file)
+                ds = xr.open_dataset(file_path)
+                lats = ds.coords['lat'].values
+                lons = ds.coords['lon'].values
+                lat_idx = np.argmin(np.abs(lats - lat))
+                lon_idx = np.argmin(np.abs(lons - lon))
+                data = ds.isel(lat=lat_idx, lon=lon_idx).to_dataframe().reset_index()
+                matched_data.append(data)
+                #df = ds.to_dataframe()
+                #matched_rows = df[(df['lat'] == lat) & (df['lon'] == lon)]
+                #if not matched_rows.empty:
+                #    matched_data.extend(matched_rows.to_dict(orient='records'))
+    # convert matched_data to dataframe for better readibility
+    #matched_df = pd.DataFrame(matched_data)
+    matched_df = pd.concat(matched_data, ignore_index=True)
+    return matched_df
+
 
 def calculate_speed(ship_speed,wave_height, displacement,k1, k2, k3, k4, wind_speed, angle):
     V0=ship_speed
