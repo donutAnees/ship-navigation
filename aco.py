@@ -1,318 +1,162 @@
-#$ pip install aco_routing
-import math
-from scipy.spatial.distance import pdist, squareform
-from scipy.spatial import KDTree
 from aco_routing import ACO
 import networkx as nx
-import numpy as np
 import matplotlib.pyplot as plt
-import random
-from generategrid import generate_grid
-import inspect
-print(inspect.signature(ACO.__init__))
 
-
-lat_lon=[(9.6, 78.8),
-(9.6, 78.88),
-(9.6, 78.96),
-(9.6, 79.04),
-(9.6, 79.12),
-(9.6, 79.2),
-(9.6, 79.28),
-(9.6, 79.36),
-(9.6, 79.44),
-(9.6, 79.52),
-(9.6, 79.6),
-(9.6, 79.68),
-(9.6, 79.76),
-(9.6, 79.84),
-(9.6, 79.92),
-(9.6, 80.0),
-(9.6, 80.08),
-(9.6, 80.16),
-(9.52, 78.8),
-(9.52, 78.88),
-(9.52, 78.96),
-(9.52, 79.04),
-(9.52, 79.12),
-(9.52, 79.2),
-(9.52, 79.28),
-(9.52, 79.36),
-(9.52, 79.44),
-(9.52, 79.52),
-(9.52, 79.6),
-(9.52, 79.68),
-(9.52, 79.76),
-(9.52, 79.84),
-(9.52, 79.92),
-(9.52, 80.0),
-(9.52, 80.08),
-(9.52, 80.16),
-(9.44, 78.8),
-(9.44, 78.88),
-(9.44, 78.96),
-(9.44, 79.04),
-(9.44, 79.12),
-(9.44, 79.2),
-(9.44, 79.28),
-(9.44, 79.36),
-(9.44, 79.44),
-(9.44, 79.52),
-(9.44, 79.6),
-(9.44, 79.68),
-(9.44, 79.76),
-(9.44, 79.84),
-(9.44, 79.92),
-(9.44, 80.0),
-(9.44, 80.08),
-(9.44, 80.16),
-(9.36, 78.8),
-(9.36, 78.88),
-(9.36, 78.96),
-(9.36, 79.04),
-(9.36, 79.12),
-(9.36, 79.2),
-(9.36, 79.28),
-(9.36, 79.36),
-(9.36, 79.44),
-(9.36, 79.52),
-(9.36, 79.6),
-(9.36, 79.68),
-(9.36, 79.76),
-(9.36, 79.84),
-(9.36, 79.92),
-(9.36, 80.0),
-(9.36, 80.08),
-(9.36, 80.16),
-(9.28, 78.8),
-(9.28, 78.88),
-(9.28, 78.96),
-(9.28, 79.04),
-(9.28, 79.12),
-(9.28, 79.2),
-(9.28, 79.28),
-(9.28, 79.36),
-(9.28, 79.44),
-(9.28, 79.52),
-(9.28, 79.6),
-(9.28, 79.68),
-(9.28, 79.76),
-(9.28, 79.84),
-(9.28, 79.92),
-(9.28, 80.0),
-(9.28, 80.08,),
-(9.28, 80.16),
-(9.2, 78.8),
-(9.2, 78.88),
-(9.2, 78.96),
-(9.2, 79.04),
-(9.2, 79.12),
-(9.2, 79.2),
-(9.2, 79.28),
-(9.2, 79.36),
-(9.2, 79.44),
-(9.2, 79.52),
-(9.2, 79.6),
-(9.2, 79.68),
-(9.2, 79.76),
-(9.2, 79.84),
-(9.2, 79.92),
-(9.2, 80.0),
-(9.2, 80.08),
-(9.2, 80.16),
-(9.12, 78.8),
-(9.12, 78.88),
-(9.12, 78.96),
-(9.12, 79.04),
-(9.12, 79.12),
-(9.12, 79.2),
-(9.12, 79.28),
-(9.12, 79.36),
-(9.12, 79.44),
-(9.12, 79.52),
-(9.12, 79.6),
-(9.12, 79.68),
-(9.12, 79.76),
-(9.12, 79.84),
-(9.12, 79.92),
-(9.12, 79.92),
-(9.12, 80.0),
-(9.12, 80.08),
-(9.12, 80.16),
-(9.12, 79.92),
-(9.12, 80.0),
-(9.12, 79.92),
-(9.12, 79.92),
-(9.12, 80.0),
-(9.12, 80.08),
-(9.12, 80.16)]
-speed=30.492733295499843
-lat_lon_set=set(lat_lon)
-lat_lon=list(lat_lon_set)
-print(f"len of lat_lon: {len(lat_lon_set)}")
-
-def haversine(lat1,lon1,lat2,lon2):
-    lat1, lon1, lat2, lon2 = map(np.radians, [lat1,lon1,lat2,lon2])
-    dlon = lon2 - lon1
-    dlat = lat2 - lat1
-    a = np.sin(dlat / 2)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon / 2)**2
-    c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
-    r = 6371 # radious in km
-    return c*r
-
-G=nx.Graph()
-for coord in lat_lon:
-    G.add_node(coord)
 '''
-print(f"Graph G: {G}")
-pos = nx.spring_layout(G)
-nx.draw(G,pos,with_labels=True, node_color='lightblue', node_size=5)
-plt.show()
+Performs Ant Colony Optimization to identify the optimal routes in the ocean.
 '''
+INF = 99999
 
-num_nodes=(len(lat_lon))
+# initialize the start and end coordinates of the grid
+grid_start = (0,0)
+grid_end = (4,5)
 
-def generate_start_end_pairs(num_nodes):
-    pairs = []
-    for start in range(num_nodes):
-        for end in range(num_nodes):
-            if start != end:
-                pairs.append((start, end))
-    return pairs
-pairs=generate_start_end_pairs(num_nodes)
+def create_graph(num_rows, num_cols, obstacles):
+    '''Converts the points grid into a graph where the edges represent the possible paths that can be taken by the ship.
+       Paths containing obstacles are represented with a cost of INF and paths without are represented with a cost of 1.
+        Returns:
+            An undirected graph with all possible edges and their corresponding costs
+        Parameters:
+            num_rows -> Number of points in a row in the grid area
+            num_cols -> Number of points in a column in the grid area
+            obstacles -> A list of obstacle coordinates
+    '''
+    # initialize the graph
+    G = nx.Graph()
+    # iterate through the number of rows and columns to get the grid indices
+    index = 1
+    grid = list()
+    for _ in range(num_rows):
+        rows = list()
+        for _ in range(num_cols):
+            rows.append(index)
+            index+=1
+        grid.append(rows)
 
-num_of_ants=10 # 2- ->10
-num_of_itrs=30
-ant_max_steps=100 #1000 ->100
-alpha=1.0 #importance of pheromone
-beta=0.07 #importance of heuristic factor
-rho=0.3 # pheromone evaporation coeff
-q=1.0 #pheromone increase intensity coeff
+    # print(grid) [uncomment for debugging]
 
-def initialize_pheromone_matrix():
-    pheromone_matrix = np.ones((num_nodes, num_nodes)) / num_nodes
-    return pheromone_matrix
+    # iterate through the grid and draw edges in the graph
+    for i in range(num_rows):
+        for j in range(num_cols):
+            if (j+1 < num_cols):
+                # check if the grid to the right is an obstacle or not
+                if (grid[i][j] not in obstacles and grid[i][j+1] not in obstacles):
+                    G.add_edge(grid[i][j], grid[i][j+1], cost=1)
+                else:
+                    G.add_edge(grid[i][j], grid[i][j+1], cost=INF)
+            if (i+1 < num_rows):
+                # check if the grid to the bottom is an obstacle or not
+                if (grid[i][j] not in obstacles and grid[i+1][j] not in obstacles):
+                    G.add_edge(grid[i][j], grid[i+1][j], cost=1)
+                else:
+                    G.add_edge(grid[i][j], grid[i+1][j], cost=INF)  
 
-phrm=initialize_pheromone_matrix()
-print(phrm)
-print(phrm.shape)
-print('_'*10)
-pheromone_matrix = np.ones((126,126))
-print(pheromone_matrix.shape)
-print(pheromone_matrix)
+    return G
 
-start_node=random.choice(lat_lon)
-end_node=random.choice(lat_lon)
-print(start_node)
-print(end_node)
-
-def euclidean_distance(coord1, coord2):
-    return math.sqrt((coord2[0] - coord1[0]) ** 2 + (coord2[1] - coord1[1]) ** 2)
-
-def get_dist_mat():
-    num_points = len(lat_lon)
-    distance_matrix = np.zeros((num_points, num_points))
-    for i,coor1 in enumerate(lat_lon):
-        for j,coor2 in enumerate(lat_lon):
-            if i!=j:
-                #distance_matrix[i,j]=haversine(coor1[0],coor1[1],coor2[0],coor2[1])
-                distance_matrix[i,j]=euclidean_distance(coor1,coor2)
-    return distance_matrix
-
-distance_matrix=get_dist_mat()
-
-def calculate_heuristic(point, end_point):
-    # the inverse of the dist to the end_point is the heuristhicccc
-    return 1.0/distance_matrix[lat_lon.index(point),lat_lon.index(end_point)]
-    #return 1.0 / np.linalg.norm(np.array(point) - np.array(end_point))
-
-def select_next_node(current_node, pheromone_matrix, alpha, beta, end_point):
-    curr_index=lat_lon.index(current_node)
-    distances=distance_matrix[curr_index]
-    pheromone_levels=pheromone_matrix[curr_index]
+def modify_graph(G, new_cost_list):
+    '''Modifies the graph to update the cost of traversing through certain edges.
+        Returns:
+            Updated undirected graph with edges and their corresponding costs
+        Parameters:
+            G -> Current graph
+            new_cost_list -> Mapping of specific points and the costs associated with traveling to or from them
+    '''
+    # get the list of grids whose costs are to be updated
+    update_points = new_cost_list.keys()
+    for point1,point2 in G.edges:
+        # check if the grids in a given edge are present in the new update list and update accordingly
+        if(point1 in update_points):
+            G.add_edge(point1, point2, cost=new_cost_list[point1])
+        elif(point2 in update_points):
+            G.add_edge(point1, point2, cost=new_cost_list[point2])
     
-    distances = np.clip(distances, a_min=1e-10, a_max=None) #avoids zero distances
-    probabilities=((pheromone_levels ** alpha) * ((1/distances) ** beta)) #or is it 1/distances
-    probabilities /= probabilities.sum()
-    # za roulette selection
-    next_node_idx = np.random.choice(len(lat_lon), p=probabilities)
-    next_node = lat_lon[next_node_idx]
-    return next_node
+    # print(G.edges(data=True)) [uncomment for debugging]
 
-def simulate_ants(start_point, end_point, pheromone_matrix, alpha, beta):
-    paths = []
-    for _ in range(num_of_ants):
-        current_node = start_point
-        path = [current_node]
-        while current_node != end_point:
-            next_node = select_next_node(current_node, pheromone_matrix, alpha, beta, end_point)
-            path.append(next_node)
-            current_node = next_node
-        paths.append(path)
-    return paths
+    return G
 
-def update_pheromone(paths, pheromone_matrix, rho, q):
-    new_pheromone_matrix = pheromone_matrix * (1 - rho)
-    for path in paths:
-        path_length = len(path)
-        pheromone_deposit = q / path_length
-        for i in range(len(path) - 1):
-            node_from = lat_lon.index(path[i])
-            node_to = lat_lon.index(path[i + 1])
-            new_pheromone_matrix[node_from, node_to] += pheromone_deposit
-            new_pheromone_matrix[node_to, node_from] += pheromone_deposit 
-    return new_pheromone_matrix
+def run_aco(G, start_lat, start_lon, end_lat, end_lon, step, num_rows, num_cols):
+    '''Runs the Ant Colony Optimization algorithm on the grid of points (represented as an undirected graph).
+        Returns:
+            1. Optimized ACO path identified
+            2. Cost of traversing the path
+        Parameters:
+            G -> The graph that represents the grid area
+            start_lat -> The latitude of the source point
+            start_lon -> The longitude of the source point
+            end_lat -> The latitude of the destination point
+            end_lon -> The longitude of the destination point
+            step -> The difference in coordinates between two adjacent points in the grid area
+            num_rows -> Number of points in a row in the grid area
+            num_cols -> Number of points in a column in the grid area
+    '''
+    # initialize the ACO object
+    aco = ACO(G, ant_max_steps=100, num_iterations=100 ,ant_random_spawn=True)
+    # calculate the source and destination grid indices using the starting and ending coordinates and the step value
+    start_lat_diff = start_lat - grid_start[0]
+    start_lon_diff = start_lon - grid_start[1]
+    end_lat_diff = end_lat - grid_start[0]
+    end_lon_diff = end_lon - grid_start[1]
+    start_point = int(1 + (start_lat_diff / step)*num_cols + (start_lon_diff/step)) 
+    end_point = int(1 + (end_lat_diff / step)*num_cols + (end_lon_diff/step))
 
-for iteration in range(num_of_itrs):
-    paths = simulate_ants(start_node, end_node, pheromone_matrix, alpha, beta)
-    pheromone_matrix = update_pheromone(paths, pheromone_matrix, rho, q)
+    # print(start_point, end_point) [uncomment for debugging]
 
-shortest_path = min(paths, key=len)
-print("Shortest Path:", shortest_path)
+    # perform aco to calculated the shortest path
+    aco_path, path_cost = aco.find_shortest_path(source=start_point, destination=end_point, num_ants=100)
 
-def visualize_path(G, path, start_node, end_node):
-    # Create a copy of the graph to modify for visualization
-    H = G.copy()
+    return (aco_path, path_cost)
 
-    # Create a color map for nodes
-    node_colors = ['lightblue'] * len(G.nodes)
+def plot_graph(G, obstacles, path=None):
+    '''Plots the graph using networkx and matplotlib.
+        Parameters:
+            G -> The graph that represents the grid area
+            obstacles -> A list of nodes that represent obstacles
+            path -> The path identified by ACO (optional), list of nodes in the path
+    '''
+    pos = nx.spring_layout(G)  # spring layout for visual separation of nodes
+    plt.figure(figsize=(8, 6))
     
-    # Highlight the nodes in the path
-    path_nodes = set(path)
-    for node in path_nodes:
-        node_colors[list(G.nodes).index(node)] = 'lightgreen'
+    # Separate obstacle nodes and non-obstacle nodes
+    non_obstacle_nodes = [node for node in G.nodes if node not in obstacles]
     
-    # Create edge colors based on the path
-    edge_colors = []
-    for edge in H.edges:
-        if edge in zip(path, path[1:]) or edge in zip(path[1:], path):
-            edge_colors.append('red')
-        else:
-            edge_colors.append('lightgrey')
+    # Draw non-obstacle nodes
+    nx.draw_networkx_nodes(G, pos, nodelist=non_obstacle_nodes, node_color='lightblue', node_size=700, label='Non-Obstacle Nodes')
     
-    # Highlight the start and end nodes
-    node_colors[list(G.nodes).index(start_node)] = 'yellow'
-    node_colors[list(G.nodes).index(end_node)] = 'yellow'
-    
-    # Draw the graph
-    pos = nx.spring_layout(H)
-    plt.figure(figsize=(12, 8))
+    # Draw obstacle nodes
+    nx.draw_networkx_nodes(G, pos, nodelist=obstacles, node_color='red', node_size=700, label='Obstacles')
 
-    # Draw nodes and edges
-    nx.draw_networkx_nodes(H, pos, node_color=node_colors, node_size=300)
-    nx.draw_networkx_edges(H, pos, edgelist=H.edges, edge_color=edge_colors, width=2)
-    nx.draw_networkx_labels(H, pos, labels={node: node for node in H.nodes}, font_size=10)
-    
-    # Draw the path specifically
-    path_edges = list(zip(path, path[1:]))
-    nx.draw_networkx_edges(H, pos, edgelist=path_edges, edge_color='blue', width=4)
-    
-    # Highlight the start and end nodes with labels
-    nx.draw_networkx_nodes(H, pos, nodelist=[start_node, end_node], node_color='yellow', node_size=500)
-    nx.draw_networkx_labels(H, pos, labels={start_node: 'Start', end_node: 'End'}, font_size=12, font_color='black')
+    # Draw edges
+    nx.draw_networkx_edges(G, pos, edgelist=G.edges, edge_color='gray')
 
-    plt.title("Shortest Path Visualization")
+    # Draw edge weights (costs)
+    edge_labels = nx.get_edge_attributes(G, 'cost')
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_color='green')
+
+    # Highlight the path if provided
+    if path:
+        path_edges = [(path[i], path[i+1]) for i in range(len(path)-1)]
+        nx.draw_networkx_edges(G, pos, edgelist=path_edges, edge_color='blue', width=3, label='ACO Path')
+        nx.draw_networkx_nodes(G, pos, nodelist=path, node_color='yellow', node_size=700, label='ACO Path Nodes')
+
+    # Draw node labels
+    nx.draw_networkx_labels(G, pos, font_size=12, font_color='black')
+
+    # Add legend and display the graph
+    plt.legend(scatterpoints=1)
+    plt.title('Graph Representation with Obstacles and ACO Path')
     plt.show()
 
 
-visualize_path(G, shortest_path, start_node, end_node)
+# checking functionality [uncomment the below lines for debugging]
+# G = create_graph(5, 6, [3,16,19,24,27])
+# G = create_graph(5, 6, [4,9,10,21,28,30])
+# G = create_graph(5, 6, [7,3,20,12,6,15])
+# modify_graph(G, {2:INF, 6:INF})
+# print(run_aco(G, 1, 1, 4, 3, 1, 5, 6))
+# print(run_aco(G, 2, 3, 1, 0, 1, 5, 6))
+# print(run_aco(G, 3, 0, 1, 4, 1, 5, 6))
+    
+G = create_graph(5, 6, [7, 3,4, 20, 12, 6, 15])
+path, cost = run_aco(G, 1, 1, 4, 3, 1, 5, 6)
+print(path)
+plot_graph(G, obstacles=[7, 3,4, 20, 12, 6, 15], path=path)

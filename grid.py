@@ -96,7 +96,6 @@ def calculate_orientation_and_distance(points_grid, path, step_size):
 
         # Find all the grids which intercept the path between start and end lat lon
         grids , distances = get_intercepting_grid_with_distance(lat1,lon1,lat2,lon2,points_grid[0][0][0],points_grid[0][0][1],step_size,len(points_grid),len(points_grid[0]))
-        
         # Populate the orientation grid with the orientation and distance for each grid the ship passes through
         count = 0
         for grid in grids:
@@ -131,10 +130,9 @@ def get_intercepting_grid_with_distance(lat1,lon1,lat2,lon2,start_lat1,start_lon
         start_lat1: The starting latitude of the grid.
         start_lon2: The starting longitude of the grid.
         step: The size of each grid.
-        grid_point_rows: Number of points in the grid row
-        grid_point_cols: Number of points in the grid col
+        grid_point_rows: Number of points vertically on the grid
+        grid_point_cols: Number of points horizontally on the grid
     '''
-    
     # Below is our grid looks like, which is normalized to integers from lat,lon based on the step, the values
     # in between the points is the grid number
     # (0,0) (0,1) (0,2) (0,3) (0,4) (0,5) (0,6)
@@ -148,7 +146,7 @@ def get_intercepting_grid_with_distance(lat1,lon1,lat2,lon2,start_lat1,start_lon
 
     x0 = int((lon1 - start_lon1) / step)
     y0 = int((start_lat1 - lat1) / step)
-    x1 = int((lat2 - start_lat1) / step)
+    x1 = int((start_lat1 - lat2) / step)
     y1 = int((lon2 - start_lon1) / step)
 
     # Line is closer to the horizontal axis 
@@ -268,7 +266,7 @@ def helper_line_high(x0, y0, x1, y1, grid_point_rows, grid_point_cols):
 
 def main():
     # Generate grid with 0.08 degree step
-    grid = generate_grid_points(2,2,8,4,1)
+    grid = generate_grid_points(9.6,78.8,9.1,80.2,0.08)
     # for row in grid:
     #     for pos in row:
     #         print(pos)
@@ -280,12 +278,12 @@ def main():
     # for g in grid:
     #     print(g)
 
-    # calculate_orientation(grid,[(9.6, 78.8),(9.1, 80.2)],0.08)
+    print(calculate_orientation_and_distance(grid,[(9.6, 78.8),(9.1, 80.2)],0.08))
 
     # print(helper_line_low(10,0,0,4,11,5))
     # print(helper_line_low(0,0,10,4,11,5))
-    print(helper_line_high(0,0,3,10,4,11))
-    print(helper_line_high(0,6,2,1,3,7))
+    #print(helper_line_high(0,0,3,10,4,11))
+    #print(helper_line_high(0,6,2,1,3,7))
 
     #ship speed calculation
     #def __init__(self, ship_speed, wave_height, displacement, k1, k2, k3, k4, wind_speed, angle):
