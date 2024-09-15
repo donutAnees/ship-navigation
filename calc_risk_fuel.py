@@ -3,6 +3,7 @@ import os
 import xarray as xr
 import numpy as np
 import pandas as pd
+import random
 from tqdm import tqdm
 from calculatefuel import gridconsumption
 from calculaterisk import *
@@ -126,12 +127,11 @@ def risk_fuel_matrix_maker(grid, step_size):
                 continue
             '''
 
-                        # decode data
+            # decode data
             '''
                     numbering goes from bottom to top
                     use desmos to get plot the points
                     omni calculator for equation
-
                     map: This could refer to a geographical map or a set of coordinates for plotting various data points like wind, waves, or currents.
                     dpt: Likely stands for depth. This might represent the depth of the ocean at specific points in the dataset.
                     uwnd: Refers to the u-component of wind, which is the eastward (or westward) component of the wind vector. It measures how fast the wind is blowing along the east-west axis.
@@ -168,9 +168,11 @@ def risk_fuel_matrix_maker(grid, step_size):
             fuel_consumption=gridconsumption(speed_of_the_ship, len_of_the_voyage_dist, fuel_consumption_rate_of_the_ship,power_of_the_main_engine, cost_of_fuel_per_ton)
             print(f"fuel consumption is {fuel_consumption}")
 
-            ship_heading=25
-            wave_direction=22
-            wind_direction=30
+            # random integer between a range
+
+            ship_heading=random.randint(20,30)
+            wave_direction=random.randint(20,30)
+            wind_direction=random.randint(20,30)
             wind_angle, wave_angle=find_relative_angles(ship_heading,wave_direction,wind_direction)
             # identify risk based on the wind_angle, wave_angle
             total_risk, risky=navigation_risk(wind_angle, wave_angle)
@@ -181,7 +183,9 @@ def risk_fuel_matrix_maker(grid, step_size):
         else:
             fr_matrix.append([-1,-1])
 
+    return fr_matrix
 
-        
 fr_matrix = risk_fuel_matrix_maker(grid, step_size)
+for idx,fr in enumerate(fr_matrix):
+    print (idx,fr)
 print(fr_matrix)
